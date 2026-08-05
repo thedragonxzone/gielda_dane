@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
 
     main_layout.addLayout(global_layout)
 
-    self.btn_generate_report = QPushButton("📄 Generuj raport syntetyczny dla AI (Europa / USA)")
+    self.btn_generate_report = QPushButton("📄 Generuj jednolity raport syntetyczny dla AI")
     self.btn_generate_report.clicked.connect(self.generate_ai_report_file)
     main_layout.addWidget(self.btn_generate_report)
 
@@ -254,13 +254,7 @@ class MainWindow(QMainWindow):
       self.status_label.setText("Brak folderu z danymi! Najpierw pobierz dane.")
       return
 
-    europe_lines = []
-    usa_lines = []
-
-    asia_tickers = ["ni225", "HSTECH", "HSI", "000001.SS", "USD/JPY"]
-    global_macro_tickers = ["DXY", "CL1!", "GC1!", "NVDA", "SNDK"]
-    # NVDA i SNDK trafiają naturalnie do sekcji USA jako kluczowe spółki/akcje
-    futures_tickers = ["NQ1!", "ES1!", "DJI", "SOXX/SMH"]
+    market_lines = []
 
     for label_name in self.tickers_map.keys():
       safe_name = label_name.replace("/", "_").replace("!", "")
@@ -272,43 +266,34 @@ class MainWindow(QMainWindow):
       metric_summary = (
           f"- **{label_name}** | 🟢 Miesiąc (1d): {month_summary} | 🟡 Tydzień (1h): {week_summary} | 🔴 Dzień (5m): {day_summary}"
       )
+      market_lines.append(metric_summary)
 
-      if label_name in asia_tickers or label_name in global_macro_tickers:
-        europe_lines.append(metric_summary)
-      if label_name in futures_tickers or label_name in global_macro_tickers:
-        usa_lines.append(metric_summary)
+    report_content = f"""# RAPORT RYNKOWY DLA AI (Aktualny stan wszystkich instrumentów)
 
-    report_content = f"""# RAPORT RYNKOWY DLA AI (Synteza Wielookresowa)
+*Zestawienie wielookresowe (Miesiąc / Tydzień / Dzień) dla wszystkich śledzonych aktywów:*
 
-## 🇪🇺 FAZA 1: Sesja Europejska (Baza z Azji i Walut/Surowców)
-*Podsumowanie w pigułce (Miesiąc / Tydzień / Dzień) dla rynków bazowych:*
-""" + "\n".join(europe_lines) + f"""
-
----
-
-## 🇺🇸 FAZA 2: Sesja w USA (Kontrakty, Sektory i Spółki AI/Tech)
-*Podsumowanie w pigułce (Miesiąc / Tydzień / Dzień) dla amerykańskich indeksów, kontraktów oraz kluczowych akcji (NVDA, SNDK):*
-""" + "\n".join(usa_lines) + f"""
+""" + "\n".join(market_lines) + f"""
 
 ---
 ### Instrukcja dla modelu AI:
-Przeanalizuj powyższe dane wielookresowe dla każdego instrumentu:
-1. Sprawdź zgodność trendów (czy krótki interwał (5m/1h) potwierdza kierunek miesięczny, czy zachodzi korekta).
-2. Oceń ogólny sentyment dla otwarcia w Europie oraz kluczowy wpływ na otwarcie Wall Street (z uwzględnieniem zachowania gigantów technologicznych NVDA i SNDK).
-3. Wskaż ewentualne dywergencje między rynkami azjatyckimi, surowcami a kontraktami/spółkami na USA.
+Przeanalizuj powyższe dane wielookresowe dla wszystkich instrumentów jako jedną spójną całość:
+1. Oceń ogólny stan i nastroje na globalnym rynku.
+2. Sprawdź spójność trendów między poszczególnymi interwałami czasowymi (miesiąc, tydzień, dzień).
+3. Wskaż najważniejsze korelacje i anomalie pomiędzy indeksami, surowcami, walutami i spółkami.
 """
 
     report_path = os.path.join(TARGET_DIRECTORY, "raport_dla_ai.md")
     try:
       with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_content)
-      self.status_label.setText(f"Wygenerowano raport AI z pigułką czasową: {report_path}")
+      self.status_label.setText(f"Wygenerowano jednolity raport AI: {report_path}")
     except Exception as e:
       self.status_label.setText(f"Błąd zapisu raportu: {str(e)}")
 
 
 if __name__ == "__main__":
   app = QApplication(sys.argv)
+  app.setStyleSheet("QWidget { font-size: 16pt; }")
   window = MainWindow()
   window.show()
   sys.exit(app.exec_())
