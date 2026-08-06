@@ -88,8 +88,9 @@ class MainWindow(QMainWindow):
   def __init__(self):
     super().__init__()
     self.setWindowTitle("Pobieracz Danych Yahoo Finance i Generator Raportów (Qt)")
-    self.resize(850, 750)
+    self.resize(950, 800)
 
+    # Główna mapa instrumentów (makro, giełda + krypto)
     self.tickers_map = {
         "NQ1!": "NQ=F",
         "ni225": "^N225",
@@ -105,6 +106,23 @@ class MainWindow(QMainWindow):
         "SOXX/SMH": "SOXX",
         "SNDK": "SNDK",
         "NVDA": "NVDA",
+        # Nowe instrumenty krypto i powiązane:
+        "SOL-USD": "SOL-USD",
+        "SOL-BTC": "SOL-BTC",
+        "BTC-USD": "BTC-USD",
+        "ETH-USD": "ETH-USD",
+        "COIN": "COIN",
+        "MSTR": "MSTR",
+    }
+
+    # Podzbiór wyłącznie dla przycisku masowego Krypto
+    self.crypto_tickers_map = {
+        "SOL-USD": "SOL-USD",
+        "SOL-BTC": "SOL-BTC",
+        "BTC-USD": "BTC-USD",
+        "ETH-USD": "ETH-USD",
+        "COIN": "COIN",
+        "MSTR": "MSTR",
     }
 
     self.ranges = [
@@ -125,29 +143,25 @@ class MainWindow(QMainWindow):
     )
     main_layout.addWidget(info_label)
 
+    # Panel przycisków globalnych / masowych
     global_layout = QHBoxLayout()
-    self.btn_all_month = QPushButton("Pobierz WSZYSTKO: Miesiąc (1d)")
-    self.btn_all_month.clicked.connect(lambda: self.start_bulk_download([("miesiac", "1mo", "1d")]))
-    global_layout.addWidget(self.btn_all_month)
-
-    self.btn_all_week = QPushButton("Pobierz WSZYSTKO: Tydzień (1h)")
-    self.btn_all_week.clicked.connect(lambda: self.start_bulk_download([("tydzien", "7d", "1h")]))
-    global_layout.addWidget(self.btn_all_week)
-
-    self.btn_all_day = QPushButton("Pobierz WSZYSTKO: Dzień (5m)")
-    self.btn_all_day.clicked.connect(lambda: self.start_bulk_download([("dzien", "2d", "5m")]))
-    global_layout.addWidget(self.btn_all_day)
-
-    self.btn_all_everything = QPushButton("Pobierz WSZYSTKO (Wszystkie zakresy)")
-    self.btn_all_everything.clicked.connect(lambda: self.start_bulk_download(self.ranges))
+    
+    self.btn_all_everything = QPushButton("Pobierz WSZYSTKO (Wszystkie tickery)")
+    self.btn_all_everything.clicked.connect(lambda: self.start_bulk_download(self.tickers_map, self.ranges))
     global_layout.addWidget(self.btn_all_everything)
+
+    self.btn_all_crypto = QPushButton("Pobierz KRYPTO (Tylko cyfrowe aktywa)")
+    self.btn_all_crypto.clicked.connect(lambda: self.start_bulk_download(self.crypto_tickers_map, self.ranges))
+    global_layout.addWidget(self.btn_all_crypto)
 
     main_layout.addLayout(global_layout)
 
-    self.btn_generate_report = QPushButton("📄 Generuj jednolity raport syntetyczny dla AI")
+    # Przycisk generowania raportu AI dla wszystkich tickerów
+    self.btn_generate_report = QPushButton("📄 Generuj jednolity raport syntetyczny dla AI (Wszystkie aktywa)")
     self.btn_generate_report.clicked.connect(self.generate_ai_report_file)
     main_layout.addWidget(self.btn_generate_report)
 
+    # Tabela z widokiem poszczególnych instrumentów
     scroll = QScrollArea()
     scroll.setWidgetResizable(True)
     scroll_content = QWidget()
@@ -196,9 +210,9 @@ class MainWindow(QMainWindow):
     self.workers.append(worker)
     worker.start()
 
-  def start_bulk_download(self, ranges_to_fetch):
-    self.status_label.setText("Trwa masowe pobieranie danych dla wszystkich tickerów...")
-    worker = BulkDownloadWorker(self.tickers_map, ranges_to_fetch, TARGET_DIRECTORY)
+  def start_bulk_download(self, target_map, ranges_to_fetch):
+    self.status_label.setText("Trwa masowe pobieranie danych...")
+    worker = BulkDownloadWorker(target_map, ranges_to_fetch, TARGET_DIRECTORY)
     worker.finished.connect(self.on_bulk_finished)
     self.workers.append(worker)
     worker.start()
@@ -268,7 +282,7 @@ class MainWindow(QMainWindow):
       )
       market_lines.append(metric_summary)
 
-    report_content = f"""# RAPORT RYNKOWY DLA AI (Aktualny stan wszystkich instrumentów)
+    report_content = f"""# RAPORT RYNKOWY DLA AI (Aktualny stan wszystkich instrumentów - Makro i Krypto)
 
 *Zestawienie wielookresowe (Miesiąc / Tydzień / Dzień) dla wszystkich śledzonych aktywów:*
 
@@ -276,10 +290,10 @@ class MainWindow(QMainWindow):
 
 ---
 ### Instrukcja dla modelu AI:
-Przeanalizuj powyższe dane wielookresowe dla wszystkich instrumentów jako jedną spójną całość:
-1. Oceń ogólny stan i nastroje na globalnym rynku.
+Przeanalizuj powyższe dane wielookresowe dla wszystkich instrumentów (w tym ekosystemu Solany i Bitcoina) jako jedną spójną całość:
+1. Oceń ogólny stan i nastroje na globalnym rynku oraz rynku kryptowalut.
 2. Sprawdź spójność trendów między poszczególnymi interwałami czasowymi (miesiąc, tydzień, dzień).
-3. Wskaż najważniejsze korelacje i anomalie pomiędzy indeksami, surowcami, walutami i spółkami.
+3. Wskaż najważniejsze korelacje i anomalie pomiędzy tradycyjnymi indeksami, surowcami, walutami a aktywami cyfrowymi (Solana, BTC, ETH, MSTR, COIN).
 """
 
     report_path = os.path.join(TARGET_DIRECTORY, "raport_dla_ai.md")
@@ -293,7 +307,7 @@ Przeanalizuj powyższe dane wielookresowe dla wszystkich instrumentów jako jedn
 
 if __name__ == "__main__":
   app = QApplication(sys.argv)
-  app.setStyleSheet("QWidget { font-size: 16pt; }")
+  app.setStyleSheet("QWidget { font-size: 14pt; }")
   window = MainWindow()
   window.show()
   sys.exit(app.exec_())
