@@ -1,0 +1,4 @@
+pierwsze gielda_dane2.py
+później jeśli inne pliki (ale nie będą) to normalizacja grupy żeby zobaczyć drzewa w pajtonie
+później normalizacja_kopiowanie -> powinno skopiować do identycznych struktur json
+a później okresl_rynek.py

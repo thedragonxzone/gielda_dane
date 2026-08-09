@@ -1,120 +1,107 @@
 {
   "meta": {
-    "version": "4.3-hybrid",
+    "version": "4.1",
     "updated": "2026-08-09",
     "requested_ranges": {
       "1h": "90d",
       "1d": "2y"
     },
     "api_keys_from_env": [
-      "CG-2muQYNQqo8rqvtw3bNe1FrLY"
+      "COINGECKO_API_KEY"
     ],
     "notes": [
-      "Wersja hybrydowa: krypto spot, pary i market structure z CoinGecko.",
-      "Derivatives: perpetual OHLCV, funding rate, open interest i taker ratio są pobierane z Binance.",
-      "Dane makro i giełdowe pozostają z Yahoo Finance oraz FRED.",
-      "Stablecoin supply pozostaje z DeFiLlama.",
-      "Binance OI i taker ratio mają ograniczenie historii do około 30 dni.",
-      "Binance funding rate jest naturalnie publikowany co 8h, ale dla zgodności z interwałem 1h jest resamplowany do siatki 1h."
+      "Usunięto płatne CoinGlass na rzecz darmowych, publicznych endpointów Binance Futures.",
+      "SOL/BTC i ETH/BTC są pobierane bezpośrednio z Binance Spot (bez sztucznego dzielenia cen Yahoo).",
+      "Derivatives 1h: Binance Perpetual OHLCV + Binance Funding Rate + Binance Open Interest + Binance Taker Ratio."
     ]
   },
   "crypto_spot": {
-    "description": "Spot i relative strength — CoinGecko",
+    "description": "Spot i relative strength",
     "instruments": {
       "BTC_USD": {
-        "coin_id": "bitcoin",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
+        "ticker": "BTC-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/BTC-USD",
         "period": "90d",
         "interval": "1h",
-        "note": "BTC/USD z CoinGecko market_chart; 1h 90 dni"
+        "note": "BTC/USD spot; 1h 90 dni"
       },
       "BTC_USD_1D": {
-        "coin_id": "bitcoin",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "ticker": "BTC-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/BTC-USD",
+        "period": "2y",
         "interval": "1d",
-        "note": "BTC/USD z CoinGecko market_chart; 1D 2 lata"
+        "note": "BTC/USD spot; 1D 2 lata"
       },
       "ETH_USD": {
-        "coin_id": "ethereum",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
+        "ticker": "ETH-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
         "period": "90d",
         "interval": "1h",
-        "note": "ETH/USD z CoinGecko market_chart; 1h 90 dni"
+        "note": "ETH/USD spot; 1h 90 dni"
       },
       "ETH_USD_1D": {
-        "coin_id": "ethereum",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "ticker": "ETH-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
+        "period": "2y",
         "interval": "1d",
-        "note": "ETH/USD z CoinGecko market_chart; 1D 2 lata"
+        "note": "ETH/USD spot; 1D 2 lata"
       },
       "SOL_USD": {
-        "coin_id": "solana",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
+        "ticker": "SOL-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
         "period": "90d",
         "interval": "1h",
-        "note": "SOL/USD z CoinGecko market_chart; 1h 90 dni"
+        "note": "SOL/USD spot; 1h 90 dni"
       },
       "SOL_USD_1D": {
-        "coin_id": "solana",
-        "source": "COINGECKO_MARKET_CHART",
-        "field": "prices",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "ticker": "SOL-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
+        "period": "2y",
         "interval": "1d",
-        "note": "SOL/USD z CoinGecko market_chart; 1D 2 lata"
+        "note": "SOL/USD spot; 1D 2 lata"
       },
       "SOL_BTC": {
-        "base_coin_id": "solana",
-        "quote_coin_id": "bitcoin",
-        "source": "COINGECKO_RATIO",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
+        "ticker": "SOLBTC",
+        "source": "BINANCE_SPOT_KLINES",
+        "source_url": "https://api.binance.com/api/v3/klines",
         "period": "90d",
         "interval": "1h",
-        "note": "SOL/BTC liczony jako SOL_USD / BTC_USD z CoinGecko; 1h 90 dni"
+        "note": "Bezpośrednia para SOL/BTC z Binance Spot"
       },
       "SOL_BTC_1D": {
-        "base_coin_id": "solana",
-        "quote_coin_id": "bitcoin",
-        "source": "COINGECKO_RATIO",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "ticker": "SOLBTC",
+        "source": "BINANCE_SPOT_KLINES",
+        "source_url": "https://api.binance.com/api/v3/klines",
+        "period": "2y",
         "interval": "1d",
-        "note": "SOL/BTC liczony jako SOL_USD / BTC_USD z CoinGecko; 1D 2 lata"
+        "note": "Bezpośrednia para SOL/BTC z Binance Spot"
       },
       "ETH_BTC": {
-        "base_coin_id": "ethereum",
-        "quote_coin_id": "bitcoin",
-        "source": "COINGECKO_RATIO",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
+        "ticker": "ETHBTC",
+        "source": "BINANCE_SPOT_KLINES",
+        "source_url": "https://api.binance.com/api/v3/klines",
         "period": "90d",
         "interval": "1h",
-        "note": "ETH/BTC liczony jako ETH_USD / BTC_USD z CoinGecko; 1h 90 dni"
+        "note": "Bezpośrednia para ETH/BTC z Binance Spot"
       },
       "ETH_BTC_1D": {
-        "base_coin_id": "ethereum",
-        "quote_coin_id": "bitcoin",
-        "source": "COINGECKO_RATIO",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "ticker": "ETHBTC",
+        "source": "BINANCE_SPOT_KLINES",
+        "source_url": "https://api.binance.com/api/v3/klines",
+        "period": "2y",
         "interval": "1d",
-        "note": "ETH/BTC liczony jako ETH_USD / BTC_USD z CoinGecko; 1D 2 lata"
+        "note": "Bezpośrednia para ETH/BTC z Binance Spot"
       }
     }
   },
   "crypto_perps": {
-    "description": "Perpetual futures — Binance Public",
+    "description": "Perpetual futures — Binance Public (Bez opłat)",
     "instruments": {
       "BTC_PERP_OHLCV": {
         "ticker": "BTCUSDT",
@@ -146,7 +133,7 @@
         "source_url": "https://fapi.binance.com/fapi/v1/fundingRate",
         "period": "90d",
         "interval": "1h",
-        "note": "Darmowa historia Funding Rate z Binance; naturalny interwał 8h, resamplowany do 1h"
+        "note": "Darmowa historia Funding Rate z Binance"
       },
       "ETH_FUNDING": {
         "ticker": "ETHUSDT",
@@ -154,7 +141,7 @@
         "source_url": "https://fapi.binance.com/fapi/v1/fundingRate",
         "period": "90d",
         "interval": "1h",
-        "note": "Darmowa historia Funding Rate z Binance; naturalny interwał 8h, resamplowany do 1h"
+        "note": "Darmowa historia Funding Rate z Binance"
       },
       "SOL_FUNDING": {
         "ticker": "SOLUSDT",
@@ -162,7 +149,7 @@
         "source_url": "https://fapi.binance.com/fapi/v1/fundingRate",
         "period": "90d",
         "interval": "1h",
-        "note": "Darmowa historia Funding Rate z Binance; naturalny interwał 8h, resamplowany do 1h"
+        "note": "Darmowa historia Funding Rate z Binance"
       },
       "BTC_OI": {
         "ticker": "BTCUSDT",
@@ -170,7 +157,7 @@
         "source_url": "https://fapi.binance.com/futures/data/openInterestHist",
         "period": "90d",
         "interval": "1h",
-        "note": "Open Interest USD value z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Open Interest USD value z Binance Futures"
       },
       "ETH_OI": {
         "ticker": "ETHUSDT",
@@ -178,7 +165,7 @@
         "source_url": "https://fapi.binance.com/futures/data/openInterestHist",
         "period": "90d",
         "interval": "1h",
-        "note": "Open Interest USD value z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Open Interest USD value z Binance Futures"
       },
       "SOL_OI": {
         "ticker": "SOLUSDT",
@@ -186,7 +173,7 @@
         "source_url": "https://fapi.binance.com/futures/data/openInterestHist",
         "period": "90d",
         "interval": "1h",
-        "note": "Open Interest USD value z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Open Interest USD value z Binance Futures"
       },
       "BTC_TAKER_RATIO": {
         "ticker": "BTCUSDT",
@@ -194,7 +181,7 @@
         "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio",
         "period": "90d",
         "interval": "1h",
-        "note": "Taker Buy/Sell Ratio z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Taker Buy/Sell Ratio z Binance Futures"
       },
       "ETH_TAKER_RATIO": {
         "ticker": "ETHUSDT",
@@ -202,7 +189,7 @@
         "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio",
         "period": "90d",
         "interval": "1h",
-        "note": "Taker Buy/Sell Ratio z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Taker Buy/Sell Ratio z Binance Futures"
       },
       "SOL_TAKER_RATIO": {
         "ticker": "SOLUSDT",
@@ -210,57 +197,57 @@
         "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio",
         "period": "90d",
         "interval": "1h",
-        "note": "Taker Buy/Sell Ratio z Binance Futures; historia limitowana do ~30 dni"
+        "note": "Taker Buy/Sell Ratio z Binance Futures"
       }
     }
   },
   "crypto_market_structure_1d": {
-    "description": "Dominance i przybliżony market cap — CoinGecko — 1D / 2 lata",
+    "description": "Dominance i globalny market cap — 1D / 2 lata",
     "instruments": {
       "BTC_DOMINANCE": {
         "source": "COINGECKO_DERIVED",
         "field": "btc_dominance",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
         "interval": "1d",
-        "note": "BTC market cap / (BTC + ETH + SOL market cap) * 100"
+        "note": "BTC market cap / total market cap * 100"
       },
       "ETH_DOMINANCE": {
         "source": "COINGECKO_DERIVED",
         "field": "eth_dominance",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
         "interval": "1d",
-        "note": "ETH market cap / (BTC + ETH + SOL market cap) * 100"
+        "note": "ETH market cap / total market cap * 100"
       },
       "SOL_DOMINANCE": {
         "source": "COINGECKO_DERIVED",
         "field": "sol_dominance",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
         "interval": "1d",
-        "note": "SOL market cap / (BTC + ETH + SOL market cap) * 100"
+        "note": "SOL market cap / total market cap * 100"
       },
       "TOTAL_MARKET_CAP": {
         "source": "COINGECKO_DERIVED",
         "field": "total_market_cap",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "source_url": "https://docs.coingecko.com/reference/global-market-cap-chart",
+        "period": "2y",
         "interval": "1d",
-        "note": "Przybliżony total market cap jako suma BTC + ETH + SOL"
+        "note": "Global crypto total market cap USD"
       },
       "TOTAL_EX_BTC": {
         "source": "COINGECKO_DERIVED",
         "field": "total_ex_btc",
-        "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
-        "period": "1y",
+        "source_url": "https://docs.coingecko.com/reference/global-market-cap-chart",
+        "period": "2y",
         "interval": "1d",
-        "note": "Przybliżony market cap bez BTC jako ETH + SOL"
+        "note": "Total market cap minus BTC market cap"
       }
     }
   },
   "stablecoins_1d": {
-    "description": "Stablecoin supply — DeFiLlama — 1D / 2 lata",
+    "description": "Stablecoin supply — 1D / 2 lata",
     "instruments": {
       "USDT_SUPPLY": {
         "ticker": "USDT",
@@ -281,7 +268,7 @@
     }
   },
   "macro_1d": {
-    "description": "Macro / risk / cross-asset — Yahoo Finance / FRED — 1D / 2 lata",
+    "description": "Macro / risk / cross-asset — 1D / 2 lata",
     "instruments": {
       "DXY": {
         "ticker": "DX-Y.NYB",
@@ -302,8 +289,7 @@
       "US10Y": {
         "ticker": "DGS10",
         "source": "FRED_CSV",
-        "_poprzedni_source_url": "https://fred.stlouisfed.org/series/DGS10",
-        "source_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
+        "source_url": "https://fred.stlouisfed.org/series/DGS10",
         "period": "2y",
         "interval": "1d",
         "note": "US 10Y Treasury yield %"

@@ -1,0 +1,76 @@
+root: object
+│
+├── schema_version: string
+├── source_file: string
+├── group_id: string
+├── dataset: string
+├── instrument: string
+├── base_asset: string
+├── quote_asset: string | null
+├── market: string
+├── interval: string
+├── source: string
+├── source_url: string | null
+├── status: string
+├── quality_flag: string
+├── quality_score: number
+├── missing_ratio: number | null
+├── value_metric: string
+├── columns_original: array[string]
+├── columns_normalized: array[string]
+│
+└── records: array
+    │
+    └── record: object
+        │
+        ├── timestamp_utc: string | null
+        ├── timestamp_raw: string | null
+        ├── value: number | string | boolean | null
+        │
+        └── values: object
+            │
+            └── <metric>: number | string | boolean | null
+
+
+import json
+
+with open("BTC_FUNDING_90d_1h_znormalizowany.json", encoding="utf-8") as f:
+    doc = json.load(f)
+
+instrument = doc["instrument"]
+dataset = doc["dataset"]
+interval = doc["interval"]
+value_metric = doc["value_metric"]
+
+print("instrument:", instrument)
+print("dataset:", dataset)
+print("interval:", interval)
+print("value_metric:", value_metric)
+
+for record in doc["records"][-5:]:
+    ts = record["timestamp_utc"]
+    value = record["value"]
+
+    print(ts, value)
+
+
+#----------------------------------------------------------------------------
+#---------------*********** KOMENT JAK W BASICU NA C64 W '92 ******** -------
+#----------------------------------------------------------------------------
+# A TUTAJ PRZYKŁAD DLA OHLC
+
+with open("BTC_PERP_OHLCV_90d_1h_znormalizowany.json", encoding="utf-8") as f:
+    doc = json.load(f)
+
+for record in doc["records"][-5:]:
+    ts = record["timestamp_utc"]
+    values = record["values"]
+
+    print(
+        ts,
+        values.get("open"),
+        values.get("high"),
+        values.get("low"),
+        values.get("close"),
+        values.get("volume"),
+    )

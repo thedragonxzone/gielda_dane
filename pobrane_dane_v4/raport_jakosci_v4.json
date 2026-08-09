@@ -1,129 +1,400 @@
 {
-  "generated_at": "2026-08-09T12:09:39.248088+00:00",
+  "generated_at": "2026-08-09T14:13:22.072163+00:00",
   "instruments": {
     "BTC_USD": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "BTC_USD_1D": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "ETH_USD": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2159,
+      "expected_rows": 2161,
+      "missing_rows": 2,
+      "missing_ratio": 0.000925,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T12:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "ETH_USD_1D": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "SOL_USD": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "SOL_USD_1D": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_MARKET_CHART",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "SOL_BTC": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "COINGECKO_RATIO",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "SOL_BTC_1D": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_RATIO",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "ETH_BTC": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "COINGECKO_RATIO",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "ETH_BTC_1D": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_RATIO",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "BTC_PERP_OHLCV": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_FUTURES_KLINES",
+      "source_url": "https://fapi.binance.com/fapi/v1/klines"
     },
     "ETH_PERP_OHLCV": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_FUTURES_KLINES",
+      "source_url": "https://fapi.binance.com/fapi/v1/klines"
     },
     "SOL_PERP_OHLCV": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2160,
+      "expected_rows": 2161,
+      "missing_rows": 1,
+      "missing_ratio": 0.000463,
+      "actual_start": "2026-05-11T14:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_FUTURES_KLINES",
+      "source_url": "https://fapi.binance.com/fapi/v1/klines"
     },
     "BTC_FUNDING": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2153,
+      "expected_rows": 2161,
+      "missing_rows": 8,
+      "missing_ratio": 0.003702,
+      "actual_start": "2026-05-11T16:00:00+00:00",
+      "actual_end": "2026-08-09T08:00:00+00:00",
+      "source": "BINANCE_FUNDING",
+      "source_url": "https://fapi.binance.com/fapi/v1/fundingRate"
     },
     "ETH_FUNDING": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2153,
+      "expected_rows": 2161,
+      "missing_rows": 8,
+      "missing_ratio": 0.003702,
+      "actual_start": "2026-05-11T16:00:00+00:00",
+      "actual_end": "2026-08-09T08:00:00+00:00",
+      "source": "BINANCE_FUNDING",
+      "source_url": "https://fapi.binance.com/fapi/v1/fundingRate"
     },
     "SOL_FUNDING": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 2153,
+      "expected_rows": 2161,
+      "missing_rows": 8,
+      "missing_ratio": 0.003702,
+      "actual_start": "2026-05-11T16:00:00+00:00",
+      "actual_end": "2026-08-09T08:00:00+00:00",
+      "source": "BINANCE_FUNDING",
+      "source_url": "https://fapi.binance.com/fapi/v1/fundingRate"
     },
     "BTC_OI": {
-      "status": "MISSING_FILE"
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T18:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_OI",
+      "source_url": "https://fapi.binance.com/futures/data/openInterestHist"
     },
     "ETH_OI": {
-      "status": "MISSING_FILE"
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T18:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_OI",
+      "source_url": "https://fapi.binance.com/futures/data/openInterestHist"
     },
     "SOL_OI": {
-      "status": "MISSING_FILE"
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T18:00:00+00:00",
+      "actual_end": "2026-08-09T13:00:00+00:00",
+      "source": "BINANCE_OI",
+      "source_url": "https://fapi.binance.com/futures/data/openInterestHist"
     },
-    "BTC_TAKER_DELTA": {
-      "status": "MISSING_FILE"
+    "BTC_TAKER_RATIO": {
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T17:00:00+00:00",
+      "actual_end": "2026-08-09T12:00:00+00:00",
+      "source": "BINANCE_TAKER_RATIO",
+      "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio"
     },
-    "ETH_TAKER_DELTA": {
-      "status": "MISSING_FILE"
+    "ETH_TAKER_RATIO": {
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T17:00:00+00:00",
+      "actual_end": "2026-08-09T12:00:00+00:00",
+      "source": "BINANCE_TAKER_RATIO",
+      "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio"
     },
-    "SOL_TAKER_DELTA": {
-      "status": "MISSING_FILE"
-    },
-    "BTC_BASIS": {
-      "status": "MISSING_FILE"
-    },
-    "ETH_BASIS": {
-      "status": "MISSING_FILE"
-    },
-    "SOL_BASIS": {
-      "status": "MISSING_FILE"
+    "SOL_TAKER_RATIO": {
+      "status": "POOR",
+      "rows": 500,
+      "expected_rows": 697,
+      "missing_rows": 197,
+      "missing_ratio": 0.28264,
+      "actual_start": "2026-07-19T17:00:00+00:00",
+      "actual_end": "2026-08-09T12:00:00+00:00",
+      "source": "BINANCE_TAKER_RATIO",
+      "source_url": "https://fapi.binance.com/futures/data/takerlongshortRatio"
     },
     "BTC_DOMINANCE": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_DERIVED",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "ETH_DOMINANCE": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_DERIVED",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "SOL_DOMINANCE": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_DERIVED",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "TOTAL_MARKET_CAP": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_DERIVED",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "TOTAL_EX_BTC": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 365,
+      "expected_rows": 260,
+      "missing_rows": 0,
+      "missing_ratio": 0.0,
+      "actual_start": "2025-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "COINGECKO_DERIVED",
+      "source_url": "https://docs.coingecko.com/reference/coins-id-market-chart-range"
     },
     "USDT_SUPPLY": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 730,
+      "expected_rows": 521,
+      "missing_rows": 1,
+      "missing_ratio": 0.001919,
+      "actual_start": "2024-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "DEFILLAMA_STABLECOIN",
+      "source_url": "https://docs.llama.fi/stablecoins"
     },
     "USDC_SUPPLY": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 730,
+      "expected_rows": 521,
+      "missing_rows": 1,
+      "missing_ratio": 0.001919,
+      "actual_start": "2024-08-10T00:00:00+00:00",
+      "actual_end": "2026-08-09T00:00:00+00:00",
+      "source": "DEFILLAMA_STABLECOIN",
+      "source_url": "https://docs.llama.fi/stablecoins"
     },
     "DXY": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 502,
+      "expected_rows": 521,
+      "missing_rows": 19,
+      "missing_ratio": 0.036468,
+      "actual_start": "2024-08-09T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/DX-Y.NYB"
     },
     "VIX": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 503,
+      "expected_rows": 521,
+      "missing_rows": 20,
+      "missing_ratio": 0.038388,
+      "actual_start": "2024-08-07T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/%5EVIX"
     },
     "US10Y": {
       "status": "MISSING_FILE"
     },
     "SP500": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 501,
+      "expected_rows": 521,
+      "missing_rows": 21,
+      "missing_ratio": 0.040307,
+      "actual_start": "2024-08-08T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/%5EGSPC"
     },
     "NASDAQ100": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 501,
+      "expected_rows": 521,
+      "missing_rows": 21,
+      "missing_ratio": 0.040307,
+      "actual_start": "2024-08-08T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/%5ENDX"
     },
     "GOLD": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 502,
+      "expected_rows": 521,
+      "missing_rows": 19,
+      "missing_ratio": 0.036468,
+      "actual_start": "2024-08-09T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/GC=F"
     },
     "USDJPY": {
-      "status": "MISSING_FILE"
+      "status": "GOOD",
+      "rows": 518,
+      "expected_rows": 521,
+      "missing_rows": 5,
+      "missing_ratio": 0.009597,
+      "actual_start": "2024-08-07T00:00:00+00:00",
+      "actual_end": "2026-08-07T00:00:00+00:00",
+      "source": "YFINANCE",
+      "source_url": "https://finance.yahoo.com/quote/USDJPY=X"
     }
   },
   "summary": {
-    "good": 0,
+    "good": 29,
     "warn": 0,
-    "poor": 0,
-    "missing": 39,
+    "poor": 6,
+    "missing": 1,
     "error": 0
   }
 }

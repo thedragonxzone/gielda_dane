@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-08-09T18:16:04.264072+00:00",
+  "recommended_profile": "BASE_PROFILE_SOL_RECOVERY_SELECTIVE",
+  "profile_display_name": "SOL Recovery Selective",
+  "profile_description": "SOL zaczyna odbijać, ale nie jest jeszcze potwierdzony jako lider.",
+  "profile_bias": "long",
+  "profile_confidence": 0.42,
+  "regime_scores": {
+    "btc_trend_score": 0.2327,
+    "eth_trend_score": 0.4235,
+    "sol_trend_score": 0.2505,
+    "crypto_trend_score": 0.3022,
+    "sol_relative_strength_score": null,
+    "eth_relative_strength_score": null,
+    "volatility_stress_score": 0.0354,
+    "macro_risk_score": 0.1807,
+    "liquidity_score": 0.0,
+    "derivatives_background_score": 0.0,
+    "alt_rotation_score": 0.0,
+    "btc_leadership_score": 0.0,
+    "sol_recovery_score": 0.8481
+  },
+  "data_quality": {
+    "total_datasets": 36,
+    "good_count": 29,
+    "poor_count": 6,
+    "missing_count": 0,
+    "poor_datasets": [
+      "btc_oi_1h",
+      "btc_taker_1h",
+      "eth_oi_1h",
+      "eth_taker_1h",
+      "sol_oi_1h",
+      "sol_taker_1h"
+    ],
+    "missing_datasets": []
+  },
+  "tags": [
+    "volatility_low",
+    "oi_data_poor",
+    "taker_data_poor"
+  ],
+  "reasons": [
+    "SOL recovery (score=0.85)."
+  ],
+  "suggested_intervals": {
+    "analysis_interval": "1h",
+    "trigger_interval": "15m",
+    "context_interval": "1d"
+  }
+}
