@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-08-09T12:09:39.248088+00:00",
+  "instruments": {
+    "BTC_USD": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_USD_1D": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_USD": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_USD_1D": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_USD": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_USD_1D": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_BTC": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_BTC_1D": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_BTC": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_BTC_1D": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_PERP_OHLCV": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_PERP_OHLCV": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_PERP_OHLCV": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_FUNDING": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_FUNDING": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_FUNDING": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_OI": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_OI": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_OI": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_TAKER_DELTA": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_TAKER_DELTA": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_TAKER_DELTA": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_BASIS": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_BASIS": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_BASIS": {
+      "status": "MISSING_FILE"
+    },
+    "BTC_DOMINANCE": {
+      "status": "MISSING_FILE"
+    },
+    "ETH_DOMINANCE": {
+      "status": "MISSING_FILE"
+    },
+    "SOL_DOMINANCE": {
+      "status": "MISSING_FILE"
+    },
+    "TOTAL_MARKET_CAP": {
+      "status": "MISSING_FILE"
+    },
+    "TOTAL_EX_BTC": {
+      "status": "MISSING_FILE"
+    },
+    "USDT_SUPPLY": {
+      "status": "MISSING_FILE"
+    },
+    "USDC_SUPPLY": {
+      "status": "MISSING_FILE"
+    },
+    "DXY": {
+      "status": "MISSING_FILE"
+    },
+    "VIX": {
+      "status": "MISSING_FILE"
+    },
+    "US10Y": {
+      "status": "MISSING_FILE"
+    },
+    "SP500": {
+      "status": "MISSING_FILE"
+    },
+    "NASDAQ100": {
+      "status": "MISSING_FILE"
+    },
+    "GOLD": {
+      "status": "MISSING_FILE"
+    },
+    "USDJPY": {
+      "status": "MISSING_FILE"
+    }
+  },
+  "summary": {
+    "good": 0,
+    "warn": 0,
+    "poor": 0,
+    "missing": 39,
+    "error": 0
+  }
+}

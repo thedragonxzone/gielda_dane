@@ -1,0 +1,463 @@
+{
+  "meta": {
+    "version": "4.0",
+    "updated": "2026-08-09",
+    "requested_ranges": {
+      "1h": "90d",
+      "1d": "2y"
+    },
+    "api_keys_from_env": [
+      "COINGLASS_API_KEY",
+      "COINGECKO_API_KEY"
+    ],
+    "notes": [
+      "TC/USD z listy użytkownika potraktowano jako BTC/USD, ponieważ TC/USD nie jest standardowym rynkiem. W nazwach użyto BTC_USD.",
+      "USD dla spot crypto jest reprezentowane przez Yahoo Finance (BTC-USD/ETH-USD/SOL-USD).",
+      "SOL/BTC i ETH/BTC są liczone jako synchroniczny cross z SOL/USD lub ETH/USD oraz BTC/USD.",
+      "Derivatives 1h: Binance perpetual OHLCV + CoinGlass funding/OI/taker delta/basis.",
+      "Taker delta = taker buy volume - taker sell volume (USD).",
+      "Funding: 1h, co pozwala analizować również ujemny funding i squeeze.",
+      "Meta danych: zakres żądany, zakres faktyczny, liczba wierszy, braki, duplikaty, monotoniczność i lista większych luk."
+    ]
+  },
+  "crypto_spot": {
+    "description": "Spot i relative strength",
+    "instruments": {
+      "BTC_USD": {
+        "ticker": "BTC-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/BTC-USD",
+        "period": "90d",
+        "interval": "1h",
+        "note": "BTC/USD spot; 1h 90 dni"
+      },
+      "BTC_USD_1D": {
+        "ticker": "BTC-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/BTC-USD",
+        "period": "2y",
+        "interval": "1d",
+        "note": "BTC/USD spot; 1D 2 lata"
+      },
+      "ETH_USD": {
+        "ticker": "ETH-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
+        "period": "90d",
+        "interval": "1h",
+        "note": "ETH/USD spot; 1h 90 dni"
+      },
+      "ETH_USD_1D": {
+        "ticker": "ETH-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
+        "period": "2y",
+        "interval": "1d",
+        "note": "ETH/USD spot; 1D 2 lata"
+      },
+      "SOL_USD": {
+        "ticker": "SOL-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
+        "period": "90d",
+        "interval": "1h",
+        "note": "SOL/USD spot; 1h 90 dni"
+      },
+      "SOL_USD_1D": {
+        "ticker": "SOL-USD",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
+        "period": "2y",
+        "interval": "1d",
+        "note": "SOL/USD spot; 1D 2 lata"
+      },
+      "SOL_BTC": {
+        "source": "YFINANCE_DERIVED_CROSS",
+        "base_ticker": "SOL-USD",
+        "quote_ticker": "BTC-USD",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
+        "period": "90d",
+        "interval": "1h",
+        "note": "SOL/BTC synchroniczny cross z SOL/USD i BTC/USD"
+      },
+      "SOL_BTC_1D": {
+        "source": "YFINANCE_DERIVED_CROSS",
+        "base_ticker": "SOL-USD",
+        "quote_ticker": "BTC-USD",
+        "source_url": "https://finance.yahoo.com/quote/SOL-USD",
+        "period": "2y",
+        "interval": "1d",
+        "note": "SOL/BTC synchroniczny cross z SOL/USD i BTC/USD"
+      },
+      "ETH_BTC": {
+        "source": "YFINANCE_DERIVED_CROSS",
+        "base_ticker": "ETH-USD",
+        "quote_ticker": "BTC-USD",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
+        "period": "90d",
+        "interval": "1h",
+        "note": "ETH/BTC synchroniczny cross z ETH/USD i BTC/USD"
+      },
+      "ETH_BTC_1D": {
+        "source": "YFINANCE_DERIVED_CROSS",
+        "base_ticker": "ETH-USD",
+        "quote_ticker": "BTC-USD",
+        "source_url": "https://finance.yahoo.com/quote/ETH-USD",
+        "period": "2y",
+        "interval": "1d",
+        "note": "ETH/BTC synchroniczny cross z ETH/USD i BTC/USD"
+      }
+    }
+  },
+  "crypto_perps": {
+    "description": "Perpetual futures — 1h / 90 dni",
+    "instruments": {
+      "BTC_PERP_OHLCV": {
+        "ticker": "BTCUSDT",
+        "source": "BINANCE_FUTURES_KLINES",
+        "source_url": "https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data",
+        "period": "90d",
+        "interval": "1h",
+        "note": "Binance USDⓈ-M perpetual OHLCV"
+      },
+      "ETH_PERP_OHLCV": {
+        "ticker": "ETHUSDT",
+        "source": "BINANCE_FUTURES_KLINES",
+        "source_url": "https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data",
+        "period": "90d",
+        "interval": "1h",
+        "note": "Binance USDⓈ-M perpetual OHLCV"
+      },
+      "SOL_PERP_OHLCV": {
+        "ticker": "SOLUSDT",
+        "source": "BINANCE_FUTURES_KLINES",
+        "source_url": "https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data",
+        "period": "90d",
+        "interval": "1h",
+        "note": "Binance USDⓈ-M perpetual OHLCV"
+      },
+      "BTC_FUNDING": {
+        "ticker": "BTCUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/funding-rate/history",
+        "source_url": "https://docs.coinglass.com/reference/fr-ohlc-histroy",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "BTCUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Funding 1h; 90 dni"
+      },
+      "ETH_FUNDING": {
+        "ticker": "ETHUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/funding-rate/history",
+        "source_url": "https://docs.coinglass.com/reference/fr-ohlc-histroy",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "ETHUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Funding 1h; 90 dni"
+      },
+      "SOL_FUNDING": {
+        "ticker": "SOLUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/funding-rate/history",
+        "source_url": "https://docs.coinglass.com/reference/fr-ohlc-histroy",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "SOLUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Funding 1h; 90 dni"
+      },
+      "BTC_OI": {
+        "ticker": "BTC",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/open-interest/aggregated-history",
+        "source_url": "https://docs.coinglass.com/reference/oi-ohlc-aggregated-history",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "symbol": "BTC",
+          "interval": "1h",
+          "limit": 1000,
+          "unit": "usd"
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Agregowany futures OI w USD; 1h"
+      },
+      "ETH_OI": {
+        "ticker": "ETH",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/open-interest/aggregated-history",
+        "source_url": "https://docs.coinglass.com/reference/oi-ohlc-aggregated-history",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "symbol": "ETH",
+          "interval": "1h",
+          "limit": 1000,
+          "unit": "usd"
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Agregowany futures OI w USD; 1h"
+      },
+      "SOL_OI": {
+        "ticker": "SOL",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/open-interest/aggregated-history",
+        "source_url": "https://docs.coinglass.com/reference/oi-ohlc-aggregated-history",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "symbol": "SOL",
+          "interval": "1h",
+          "limit": 1000,
+          "unit": "usd"
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Agregowany futures OI w USD; 1h"
+      },
+      "BTC_TAKER_DELTA": {
+        "ticker": "BTCUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/v2/taker-buy-sell-volume/history",
+        "source_url": "https://docs.coinglass.com/reference/taker-buysell-volume",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "BTCUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "kind": "taker_delta",
+        "note": "Taker delta USD = buy volume - sell volume"
+      },
+      "ETH_TAKER_DELTA": {
+        "ticker": "ETHUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/v2/taker-buy-sell-volume/history",
+        "source_url": "https://docs.coinglass.com/reference/taker-buysell-volume",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "ETHUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "kind": "taker_delta",
+        "note": "Taker delta USD = buy volume - sell volume"
+      },
+      "SOL_TAKER_DELTA": {
+        "ticker": "SOLUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/v2/taker-buy-sell-volume/history",
+        "source_url": "https://docs.coinglass.com/reference/taker-buysell-volume",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "SOLUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "kind": "taker_delta",
+        "note": "Taker delta USD = buy volume - sell volume"
+      },
+      "BTC_BASIS": {
+        "ticker": "BTCUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/basis/history",
+        "source_url": "https://docs.coinglass.com/reference/basis",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "BTCUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Futures basis; CoinGlass zwraca m.in. open/close basis %"
+      },
+      "ETH_BASIS": {
+        "ticker": "ETHUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/basis/history",
+        "source_url": "https://docs.coinglass.com/reference/basis",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "ETHUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Futures basis; CoinGlass zwraca m.in. open/close basis %"
+      },
+      "SOL_BASIS": {
+        "ticker": "SOLUSDT",
+        "source": "COINGLASS_HISTORY",
+        "endpoint": "/api/futures/basis/history",
+        "source_url": "https://docs.coinglass.com/reference/basis",
+        "auth_env": "COINGLASS_API_KEY",
+        "params": {
+          "exchange": "Binance",
+          "symbol": "SOLUSDT",
+          "interval": "1h",
+          "limit": 1000
+        },
+        "period": "90d",
+        "interval": "1h",
+        "note": "Futures basis; CoinGlass zwraca m.in. open/close basis %"
+      }
+    }
+  },
+  "crypto_market_structure_1d": {
+    "description": "Dominance i globalny market cap — 1D / 2 lata",
+    "instruments": {
+      "BTC_DOMINANCE": {
+        "source": "COINGECKO_DERIVED",
+        "field": "btc_dominance",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
+        "interval": "1d",
+        "note": "BTC market cap / total market cap * 100"
+      },
+      "ETH_DOMINANCE": {
+        "source": "COINGECKO_DERIVED",
+        "field": "eth_dominance",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
+        "interval": "1d",
+        "note": "ETH market cap / total market cap * 100"
+      },
+      "SOL_DOMINANCE": {
+        "source": "COINGECKO_DERIVED",
+        "field": "sol_dominance",
+        "source_url": "https://docs.coingecko.com/reference/crypto-global",
+        "period": "2y",
+        "interval": "1d",
+        "note": "SOL market cap / total market cap * 100"
+      },
+      "TOTAL_MARKET_CAP": {
+        "source": "COINGECKO_DERIVED",
+        "field": "total_market_cap",
+        "source_url": "https://docs.coingecko.com/reference/global-market-cap-chart",
+        "period": "2y",
+        "interval": "1d",
+        "note": "Global crypto total market cap USD"
+      },
+      "TOTAL_EX_BTC": {
+        "source": "COINGECKO_DERIVED",
+        "field": "total_ex_btc",
+        "source_url": "https://docs.coingecko.com/reference/global-market-cap-chart",
+        "period": "2y",
+        "interval": "1d",
+        "note": "Total market cap minus BTC market cap"
+      }
+    }
+  },
+  "stablecoins_1d": {
+    "description": "Stablecoin supply — 1D / 2 lata",
+    "instruments": {
+      "USDT_SUPPLY": {
+        "ticker": "USDT",
+        "source": "DEFILLAMA_STABLECOIN",
+        "source_url": "https://docs.llama.fi/stablecoins",
+        "period": "2y",
+        "interval": "1d",
+        "note": "USDT circulating supply / USD value from DeFiLlama"
+      },
+      "USDC_SUPPLY": {
+        "ticker": "USDC",
+        "source": "DEFILLAMA_STABLECOIN",
+        "source_url": "https://docs.llama.fi/stablecoins",
+        "period": "2y",
+        "interval": "1d",
+        "note": "USDC circulating supply / USD value from DeFiLlama"
+      }
+    }
+  },
+  "macro_1d": {
+    "description": "Macro / risk / cross-asset — 1D / 2 lata",
+    "instruments": {
+      "DXY": {
+        "ticker": "DX-Y.NYB",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/DX-Y.NYB",
+        "period": "2y",
+        "interval": "1d",
+        "note": "US Dollar Index"
+      },
+      "VIX": {
+        "ticker": "^VIX",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/%5EVIX",
+        "period": "2y",
+        "interval": "1d",
+        "note": "VIX close"
+      },
+      "US10Y": {
+        "ticker": "DGS10",
+        "source": "FRED_CSV",
+        "source_url": "https://fred.stlouisfed.org/series/DGS10",
+        "period": "2y",
+        "interval": "1d",
+        "note": "US 10Y Treasury constant maturity yield, %"
+      },
+      "SP500": {
+        "ticker": "^GSPC",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/%5EGSPC",
+        "period": "2y",
+        "interval": "1d",
+        "note": "S&P 500"
+      },
+      "NASDAQ100": {
+        "ticker": "^NDX",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/%5ENDX",
+        "period": "2y",
+        "interval": "1d",
+        "note": "Nasdaq 100"
+      },
+      "GOLD": {
+        "ticker": "GC=F",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/GC=F",
+        "period": "2y",
+        "interval": "1d",
+        "note": "Gold futures"
+      },
+      "USDJPY": {
+        "ticker": "USDJPY=X",
+        "source": "YFINANCE",
+        "source_url": "https://finance.yahoo.com/quote/USDJPY=X",
+        "period": "2y",
+        "interval": "1d",
+        "note": "USD/JPY"
+      }
+    }
+  }
+}
