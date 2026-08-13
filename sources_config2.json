@@ -299,15 +299,6 @@
         "interval": "1d",
         "note": "VIX close"
       },
-      "US10Y": {
-        "ticker": "DGS10",
-        "source": "FRED_CSV",
-        "_poprzedni_source_url": "https://fred.stlouisfed.org/series/DGS10",
-        "source_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-        "period": "2y",
-        "interval": "1d",
-        "note": "US 10Y Treasury yield %"
-      },
       "SP500": {
         "ticker": "^GSPC",
         "source": "YFINANCE",

@@ -171,7 +171,7 @@ def request_json(url, params=None, headers=None, retries=4):
         except Exception as exc:
             last = exc
             if attempt < retries - 1:
-                time.sleep(3.0 * (attempt + 1))
+                time.sleep(15.0 * (attempt + 1))
     raise last
 
 # ----------------------------
@@ -733,7 +733,7 @@ class MainWindow(QMainWindow):
         form.addRow("Zakres:", self.combo_scope)
         
         self.skip_existing_checkbox = QCheckBox("Pomiń już pobrane pliki")
-        self.skip_existing_checkbox.setChecked(False)
+        self.skip_existing_checkbox.setChecked(True)
         form.addRow(self.skip_existing_checkbox)
         
         self.info = QLabel(
