@@ -6,7 +6,8 @@ from datetime import datetime
 
 import pandas as pd
 import yfinance as yf
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -22,17 +23,19 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TARGET_DIRECTORY = os.path.join(BASE_DIR, "pobrane_dane")
 
 # Progi do raportu "dla człowieka".
+# Długi zakres to teraz 6 miesięcy, więc próg jest nieco wyższy niż dla 3 miesięcy.
 CHANGE_THRESHOLDS = {
-    "miesiac": 1.5,
+    "szesc_miesiecy": 2.0,
     "tydzien": 1.0,
     "dzien": 0.7,
 }
 
-# Orientacyjna grupa wpływająca na SOL:
+# Orientacyjna grupa wpływająca na SOL.
 GROUP_COMPONENTS = ["NQ1!", "NVDA", "ETH-USD", "BTC-USD"]
 GROUP_TARGET = "SOL-USD"
 
@@ -68,6 +71,9 @@ PROFILE_PRIORITY = [
 
 
 def safe_label(label_name: str) -> str:
+    """
+    Zamienia nazwę tickera na bezpieczną nazwę pliku.
+    """
     label_name = str(label_name).replace("/", "_").replace("!", "")
     label_name = re.sub(r"[^A-Za-z0-9._-]", "_", label_name)
     label_name = re.sub(r"_+", "_", label_name).strip("_")
@@ -79,6 +85,9 @@ def make_file_path(target_dir: str, label_name: str, suffix: str) -> str:
 
 
 def normalize_dataframe(df):
+    """
+    Spłaszcza kolumny MultiIndex zwracane czasem przez yfinance.
+    """
     if df is None:
         return df
 
@@ -90,6 +99,9 @@ def normalize_dataframe(df):
 
 
 def download_ohlcv(ticker: str, period: str, interval: str):
+    """
+    Pobiera dane OHLCV z Yahoo Finance.
+    """
     try:
         df = yf.download(
             ticker,
@@ -111,6 +123,9 @@ def download_ohlcv(ticker: str, period: str, interval: str):
 
 
 def classify_change(pct, suffix: str) -> str:
+    """
+    Klasyfikuje zmianę procentową jako wzrost / spadek / konsolidacja.
+    """
     if pct is None:
         return "brak"
 
@@ -123,6 +138,172 @@ def classify_change(pct, suffix: str) -> str:
         return "spadek"
 
     return "konsolidacja"
+
+
+def calculate_indicators(df: pd.DataFrame) -> dict:
+    """
+    Oblicza podstawowe wskaźniki techniczne z użyciem biblioteki pandas.
+    """
+    if df is None or df.empty or "Close" not in df.columns:
+        return {}
+
+    close = pd.to_numeric(df["Close"], errors="coerce").dropna()
+
+    if len(close) < 14:
+        return {}
+
+    # RSI (14)
+    delta = close.diff()
+    gain = delta.clip(lower=0)
+    loss = -1 * delta.clip(upper=0)
+
+    avg_gain = gain.rolling(window=14, min_periods=14).mean()
+    avg_loss = loss.rolling(window=14, min_periods=14).mean()
+
+    rs = avg_gain / avg_loss.replace(0, 1e-9)
+    rsi = 100 - (100 / (1 + rs))
+
+    # EMA 20 & SMA 50
+    ema20 = close.ewm(span=20, adjust=False).mean() if len(close) >= 20 else pd.Series(dtype=float)
+    sma50 = close.rolling(window=50).mean() if len(close) >= 50 else pd.Series(dtype=float)
+
+    # MACD (12, 26, 9)
+    ema12 = close.ewm(span=12, adjust=False).mean()
+    ema26 = close.ewm(span=26, adjust=False).mean()
+
+    macd_line = ema12 - ema26
+    macd_signal = macd_line.ewm(span=9, adjust=False).mean()
+
+    # Bollinger Bands (20, 2)
+    bb_middle = close.rolling(window=20).mean()
+    bb_std = close.rolling(window=20).std()
+    bb_upper = bb_middle + (bb_std * 2)
+    bb_lower = bb_middle - (bb_std * 2)
+
+    def last_val(s):
+        if not s.empty and pd.notna(s.iloc[-1]):
+            return float(s.iloc[-1])
+        return None
+
+    return {
+        "rsi_14": last_val(rsi),
+        "ema_20": last_val(ema20),
+        "sma_50": last_val(sma50),
+        "macd": last_val(macd_line),
+        "macd_signal": last_val(macd_signal),
+        "bb_upper": last_val(bb_upper),
+        "bb_lower": last_val(bb_lower),
+    }
+
+
+def align_markdown_table(lines: list) -> list:
+    """
+    Formatuje i równa pionowo kolumny w tabelach Markdown.
+    """
+    out = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        if line.strip().startswith("|") and line.strip().endswith("|"):
+            block = []
+
+            while i < len(lines) and lines[i].strip().startswith("|") and lines[i].strip().endswith("|"):
+                block.append(lines[i].strip())
+                i += 1
+
+            rows = [[c.strip() for c in r.split("|")[1:-1]] for r in block]
+
+            if len(rows) >= 2:
+                num_cols = max(len(r) for r in rows)
+
+                for r in rows:
+                    while len(r) < num_cols:
+                        r.append("")
+
+                alignments = []
+                for c in rows[1]:
+                    if c.startswith(":") and c.endswith(":"):
+                        alignments.append("center")
+                    elif c.endswith(":"):
+                        alignments.append("right")
+                    else:
+                        alignments.append("left")
+
+                col_widths = [0] * num_cols
+
+                for r_idx, r in enumerate(rows):
+                    if r_idx == 1:
+                        continue
+
+                    for c_idx, val in enumerate(r):
+                        col_widths[c_idx] = max(col_widths[c_idx], len(val))
+
+                col_widths = [max(w, 3) for w in col_widths]
+
+                aligned_block = []
+
+                # Row 0: Header
+                header_cells = []
+                for c_idx, val in enumerate(rows[0]):
+                    w = col_widths[c_idx]
+                    align = alignments[c_idx]
+
+                    if align == "center":
+                        cell = val.center(w)
+                    elif align == "right":
+                        cell = val.rjust(w)
+                    else:
+                        cell = val.ljust(w)
+
+                    header_cells.append(f" {cell} ")
+
+                aligned_block.append("|" + "|".join(header_cells) + "|")
+
+                # Row 1: Separator
+                sep_cells = []
+                for c_idx, align in enumerate(alignments):
+                    w = col_widths[c_idx]
+
+                    if align == "center":
+                        cell = ":" + "-" * w + ":"
+                    elif align == "right":
+                        cell = "-" * (w + 1) + ":"
+                    else:
+                        cell = ":" + "-" * (w + 1)
+
+                    sep_cells.append(cell)
+
+                aligned_block.append("|" + "|".join(sep_cells) + "|")
+
+                # Row 2+: Data
+                for r in rows[2:]:
+                    data_cells = []
+
+                    for c_idx, val in enumerate(r):
+                        w = col_widths[c_idx]
+                        align = alignments[c_idx]
+
+                        if align == "center":
+                            cell = val.center(w)
+                        elif align == "right":
+                            cell = val.rjust(w)
+                        else:
+                            cell = val.ljust(w)
+
+                        data_cells.append(f" {cell} ")
+
+                    aligned_block.append("|" + "|".join(data_cells) + "|")
+
+                out.extend(aligned_block)
+            else:
+                out.extend(block)
+        else:
+            out.append(line)
+            i += 1
+
+    return out
 
 
 class BulkDownloadWorker(QThread):
@@ -141,12 +322,14 @@ class BulkDownloadWorker(QThread):
 
             errors = []
             saved_files = 0
+
             total_tasks = len(self.tickers_map) * len(self.ranges)
             done_tasks = 0
 
             for label_name, yf_ticker in self.tickers_map.items():
                 for suffix, period, interval in self.ranges:
                     done_tasks += 1
+
                     self.progress.emit(
                         f"Pobieranie {label_name} / {suffix} ({done_tasks}/{total_tasks})..."
                     )
@@ -173,8 +356,10 @@ class BulkDownloadWorker(QThread):
 
             if errors:
                 message = f"Zapisano {saved_files} plików. Problemy: " + "; ".join(errors[:8])
+
                 if len(errors) > 8:
                     message += f" (+{len(errors) - 8} kolejnych)"
+
                 self.bulk_finished.emit(message, False)
             else:
                 self.bulk_finished.emit(
@@ -190,12 +375,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Panel rynku — dane, grupa SOL i raporty")
+        self.setWindowTitle("Panel rynku — dane, wskaźniki, grupa SOL i raporty")
         self.resize(1350, 900)
 
         self.bulk_worker = None
 
-        # Zaktualizowana lista tickerów (z uwzględnieniem SOX, SOXX oraz SK Hynix)
         self.tickers_map = {
             "NQ1!": "NQ=F",
             "ES1!": "ES=F",
@@ -208,26 +392,27 @@ class MainWindow(QMainWindow):
             "DXY": "DX-Y.NYB",
             "CL1!": "CL=F",
             "GC1!": "GC=F",
-
-            # Półprzewodniki i technologia:
+            "SI1!": "SI=F",
+            "HG1!": "HG=F",
             "SOX": "^SOX",
             "SOXX": "SOXX",
             "NVDA": "NVDA",
             "Hynix": "000660.KS",
+            "MU": "MU",
             "SNDK": "SNDK",
-
-            # Krypto i powiązane:
             "SOL-USD": "SOL-USD",
             "SOL-BTC": "SOL-BTC",
             "BTC-USD": "BTC-USD",
             "ETH-USD": "ETH-USD",
             "COIN": "COIN",
             "MSTR": "MSTR",
-
-            # Dodatkowe dane makro / altseason:
             "VIX": "^VIX",
             "US10Y": "^TNX",
             "ETH-BTC": "ETH-BTC",
+            "SILJ": "SILJ",
+            "SIL": "SIL",
+            "GDX": "GDX",
+            "TIP": "TIP",
         }
 
         self.crypto_tickers_map = {
@@ -238,6 +423,76 @@ class MainWindow(QMainWindow):
             "COIN": "COIN",
             "MSTR": "MSTR",
             "ETH-BTC": "ETH-BTC",
+        }
+
+        self.market_names_en = {
+            "NQ1!": "US Tech Futures",
+            "ES1!": "US S&P Futures",
+            "DJI": "US Dow Jones Index",
+            "ni225": "Japan Equity Index",
+            "HSI": "Hong Kong Equity Index",
+            "HSTECH": "Hong Kong Tech Index",
+            "000001.SS": "China Shanghai Index",
+            "USD/JPY": "Forex / Risk FX",
+            "DXY": "US Dollar Index",
+            "CL1!": "Crude Oil Futures",
+            "GC1!": "Gold Futures",
+            "SI1!": "Silver Futures",
+            "HG1!": "Copper / Industrial Cycle",
+            "SOX": "PHLX Semiconductor Index",
+            "SOXX": "Semiconductor Sector ETF",
+            "NVDA": "Semiconductors / AI Leader",
+            "Hynix": "Memory / HBM Hardware",
+            "SNDK": "Flash Memory Sector",
+            "MU": "Memory Sector",
+            "SOL-USD": "Cryptocurrency / Layer 1 Target",
+            "SOL-BTC": "Crypto Ratio / Relative Strength",
+            "BTC-USD": "Cryptocurrency Benchmark",
+            "ETH-USD": "Altcoin Benchmark",
+            "COIN": "Crypto Ecosystem Stock",
+            "MSTR": "Crypto Ecosystem / BTC Proxy",
+            "VIX": "Volatility / Risk Index",
+            "US10Y": "US 10Y Yield",
+            "ETH-BTC": "Altcoin / BTC Ratio",
+            "SILJ": "Silver Juniors / Leverage and Sentiment",
+            "SIL": "Silver Miners",
+            "GDX": "Gold Miners",
+            "TIP": "TIPS ETF / U.S. Real Interest Rates",
+        }
+
+        self.market_names_pl = {
+            "NQ1!": "Kontrakty US Tech",
+            "ES1!": "Kontrakty US S&P",
+            "DJI": "Indeks Dow Jones",
+            "ni225": "Indeks Japonii",
+            "HSI": "Indeks Hong Kong",
+            "HSTECH": "Indeks Tech HK",
+            "000001.SS": "Indeks Szanghaj",
+            "USD/JPY": "Waluty / Sentyment",
+            "DXY": "Indeks Dolara",
+            "CL1!": "Ropa Naftowa",
+            "GC1!": "Złoto",
+            "SI1!": "Srebro",
+            "HG1!": "Miedź / koniunktura przemysłowa",
+            "SOX": "Indeks Półprzewodników PHLX",
+            "SOXX": "ETF na Półprzewodniki",
+            "MU": "Micron",
+            "NVDA": "Półprzewodniki / AI",
+            "Hynix": "Pamięci RAM i HBM",
+            "SNDK": "Sektor Pamięci Flash",
+            "SOL-USD": "Kryptowaluty / Warstwa 1",
+            "SOL-BTC": "Siła SOL względem BTC",
+            "BTC-USD": "Benchmark Kryptowalut",
+            "ETH-USD": "Benchmark Altcoinów",
+            "COIN": "Giełda Kryptowalut",
+            "MSTR": "Spółka Proxy BTC",
+            "VIX": "Indeks Zmienności / Stresu",
+            "US10Y": "Rentowność Obligacji US 10Y",
+            "ETH-BTC": "Siła ETH względem BTC",
+            "SILJ": "Juniorzy srebra / lewar i sentyment",
+            "SIL": "Górnicy srebra",
+            "GDX": "Górnicy złota",
+            "TIP": "TIPS ETF / realne stopy procentowe US",
         }
 
         self.context_map = {
@@ -252,14 +507,14 @@ class MainWindow(QMainWindow):
             "DXY": "Dolar / makro",
             "CL1!": "Ropa",
             "GC1!": "Złoto",
-
-            # Kontekst sektora półprzewodników
+            "SI1!": "Srebro futures / baza",
+            "HG1!": "Miedź / koniunktura przemysłowa",
             "SOX": "Indeks półprzewodników PHLX",
             "SOXX": "ETF na sektor półprzewodników",
             "NVDA": "Grupa SOL / półprzewodniki",
             "Hynix": "SK Hynix / pamięci RAM i HBM",
             "SNDK": "Spółka pamięci",
-
+            "MU": "Spółka pamięci",
             "SOL-USD": "Cel grupy SOL",
             "SOL-BTC": "Siła SOL względem BTC",
             "BTC-USD": "Grupa SOL / benchmark krypto",
@@ -269,10 +524,18 @@ class MainWindow(QMainWindow):
             "VIX": "Zmienność / risk-off",
             "US10Y": "Rentowności US",
             "ETH-BTC": "ETH względem BTC",
+            "SILJ": "Juniorzy srebra / lewar i sentyment",
+            "SIL": "Górnicy srebra",
+            "GDX": "Górnicy złota",
+            "TIP": "TIPS ETF / realne stopy procentowe US",
         }
 
+        # Zakresy:
+        # 6 miesięcy interwał dzienny,
+        # 7 dni interwał 1h,
+        # 1 dzień interwał 5m.
         self.ranges = [
-            ("miesiac", "1mo", "1d"),
+            ("szesc_miesiecy", "6mo", "1d"),
             ("tydzien", "7d", "1h"),
             ("dzien", "1d", "5m"),
         ]
@@ -291,7 +554,8 @@ class MainWindow(QMainWindow):
             f"<h3 style='margin:0;'>Panel danych rynkowych</h3>"
             f"Katalog zapisu plików: <b>{os.path.abspath(TARGET_DIRECTORY)}</b><br>"
             "Grupa referencyjna SOL liczona orientacyjnie jako średnia procentowa zmian: "
-            "<b>NQ1!, NVDA, ETH-USD, BTC-USD</b> i porównywana z <b>SOL-USD</b>."
+            "<b>NQ1!, NVDA, ETH-USD, BTC-USD</b> i porównywana z <b>SOL-USD</b>.<br>"
+            "Długi interwał: <b>6 miesięcy (1D)</b>."
         )
         header_label.setWordWrap(True)
         main_layout.addWidget(header_label)
@@ -299,6 +563,7 @@ class MainWindow(QMainWindow):
         # 1. Pobieranie danych
         download_group = QGroupBox("1. Pobieranie danych")
         download_layout = QVBoxLayout()
+
         download_buttons_layout = QHBoxLayout()
 
         self.btn_all_everything = QPushButton("⬇ Pobierz WSZYSTKO (wszystkie tickery)")
@@ -316,18 +581,20 @@ class MainWindow(QMainWindow):
         download_buttons_layout.addStretch()
 
         download_note = QLabel(
-            "Każdy z przycisków pobiera komplet zakresów: miesiąc / tydzień / dzień."
+            "Każdy z przycisków pobiera komplet zakresów: 6 miesięcy (1D) / tydzień (1H) / dzień (5M)."
         )
         download_note.setStyleSheet("color:#8b949e;")
 
         download_layout.addLayout(download_buttons_layout)
         download_layout.addWidget(download_note)
+
         download_group.setLayout(download_layout)
         main_layout.addWidget(download_group)
 
         # 2. Analiza
         analysis_group = QGroupBox("2. Analiza")
         analysis_layout = QVBoxLayout()
+
         analysis_buttons_layout = QHBoxLayout()
 
         self.btn_group_image = QPushButton("🧩 Pokaż obraz grupy SOL (NQ1! / NVDA / ETH / BTC)")
@@ -349,12 +616,14 @@ class MainWindow(QMainWindow):
 
         analysis_layout.addLayout(analysis_buttons_layout)
         analysis_layout.addWidget(analysis_note)
+
         analysis_group.setLayout(analysis_layout)
         main_layout.addWidget(analysis_group)
 
         # 3. Raporty
         reports_group = QGroupBox("3. Raporty")
         reports_layout = QVBoxLayout()
+
         report_buttons_layout = QHBoxLayout()
 
         self.btn_report_json = QPushButton("📊 Raport analityczny (JSON)")
@@ -373,13 +642,14 @@ class MainWindow(QMainWindow):
 
         reports_note = QLabel(
             "Raport analityczny jest maszynowy (JSON), raport AI opisowy (Markdown), "
-            "a raport dla człowieka czytelną, ustrukturyzowaną tabelą."
+            "a raport dla człowieka czytelną, ustrukturyzowaną i idealnie wyrównaną tabelą."
         )
         reports_note.setWordWrap(True)
         reports_note.setStyleSheet("color:#8b949e;")
 
         reports_layout.addLayout(report_buttons_layout)
         reports_layout.addWidget(reports_note)
+
         reports_group.setLayout(reports_layout)
         main_layout.addWidget(reports_group)
 
@@ -462,6 +732,7 @@ class MainWindow(QMainWindow):
         for label_name, yf_ticker in self.tickers_map.items():
             checkbox = QCheckBox()
             checkbox.setChecked(True)
+
             self.ticker_checkboxes[label_name] = checkbox
 
             grid_layout.addWidget(checkbox, row, 0)
@@ -476,6 +747,7 @@ class MainWindow(QMainWindow):
 
         scroll.setWidget(scroll_content)
         tickers_layout.addWidget(scroll)
+
         tickers_group.setLayout(tickers_layout)
         main_layout.addWidget(tickers_group)
 
@@ -483,8 +755,8 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("Gotowy do pracy.")
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet("color:#58a6ff; font-weight:bold;")
-        main_layout.addWidget(self.status_label)
 
+        main_layout.addWidget(self.status_label)
         main_layout.addStretch()
 
         self.setCentralWidget(central_widget)
@@ -509,6 +781,7 @@ class MainWindow(QMainWindow):
 
     def _cleanup_sender_worker(self):
         worker = self.sender()
+
         if worker is None:
             return
 
@@ -583,14 +856,17 @@ class MainWindow(QMainWindow):
             "bars": 0,
             "range_pct": None,
             "range_pos": None,
+            "indicators": {},
         }
 
     def _find_column_idx(self, columns: list, wanted_names: list) -> int:
         for wanted_name in wanted_names:
             for idx, col in enumerate(columns):
                 col_name = col[0] if isinstance(col, list) else col
+
                 if col_name == wanted_name:
                     return idx
+
         return -1
 
     def _summarize_file(self, file_path: str) -> dict:
@@ -607,7 +883,22 @@ class MainWindow(QMainWindow):
             rows = data.get("data", [])
             index = data.get("index", [])
 
+            if len(index) != len(rows):
+                common_len = min(len(index), len(rows))
+                index = index[:common_len]
+                rows = rows[:common_len]
+
             summary["bars"] = len(rows)
+
+            df_cols = [c[0] if isinstance(c, list) else c for c in columns]
+
+            if index:
+                df = pd.DataFrame(rows, columns=df_cols, index=index)
+            else:
+                df = pd.DataFrame(rows, columns=df_cols)
+
+            indicators = calculate_indicators(df)
+            summary["indicators"] = indicators
 
             close_idx = self._find_column_idx(columns, ["Close", "Adj Close"])
             high_idx = self._find_column_idx(columns, ["High"])
@@ -619,8 +910,10 @@ class MainWindow(QMainWindow):
 
             first_close = None
             last_close = None
+
             min_price = None
             max_price = None
+
             last_timestamp = ""
 
             for i, row in enumerate(rows):
@@ -639,12 +932,14 @@ class MainWindow(QMainWindow):
                 for value in numeric_values:
                     if min_price is None or value < min_price:
                         min_price = value
+
                     if max_price is None or value > max_price:
                         max_price = value
 
                 if isinstance(close_value, (int, float)):
                     if first_close is None:
                         first_close = close_value
+
                     last_close = close_value
 
                     if index and i < len(index):
@@ -669,8 +964,10 @@ class MainWindow(QMainWindow):
 
             if min_price is not None and max_price is not None and last_close is not None:
                 denom = abs(float(last_close))
+
                 if denom > 0:
                     summary["range_pct"] = ((max_price - min_price) / denom) * 100.0
+
                     if max_price > min_price:
                         summary["range_pos"] = (last_close - min_price) / (max_price - min_price)
                     else:
@@ -696,8 +993,11 @@ class MainWindow(QMainWindow):
         if self.chk_minmax.isChecked():
             min_price = summary.get("min")
             max_price = summary.get("max")
+
             if min_price is not None and max_price is not None:
-                parts.append(f"min/max: {self.format_price(min_price)}/{self.format_price(max_price)}")
+                parts.append(
+                    f"min/max: {self.format_price(min_price)}/{self.format_price(max_price)}"
+                )
 
         if self.chk_bars.isChecked():
             parts.append(f"świece: {summary.get('bars', 0)}")
@@ -705,29 +1005,47 @@ class MainWindow(QMainWindow):
         if self.chk_timestamp.isChecked() and summary.get("last_ts"):
             parts.append(f"ostatni zapis: {summary.get('last_ts')}")
 
+        inds = summary.get("indicators", {})
+        ind_parts = []
+
+        if inds.get("rsi_14") is not None:
+            ind_parts.append(f"RSI: {inds['rsi_14']:.1f}")
+
+        if inds.get("ema_20") is not None:
+            ind_parts.append(f"EMA20: {self.format_price(inds['ema_20'])}")
+
+        if inds.get("sma_50") is not None:
+            ind_parts.append(f"SMA50: {self.format_price(inds['sma_50'])}")
+
+        if inds.get("macd") is not None and inds.get("macd_signal") is not None:
+            ind_parts.append(f"MACD: {inds['macd']:.2f}/{inds['macd_signal']:.2f}")
+
+        if ind_parts:
+            parts.append("Wskaźniki: [" + ", ".join(ind_parts) + "]")
+
         return " | ".join(parts)
 
-    def _trend_comment(self, month_pct, week_pct, day_pct) -> str:
-        if None in (month_pct, week_pct, day_pct):
+    def _trend_comment(self, long_pct, week_pct, day_pct) -> str:
+        if None in (long_pct, week_pct, day_pct):
             return "brak danych"
 
-        if month_pct > 0 and week_pct > 0 and day_pct > 0:
+        if long_pct > 0 and week_pct > 0 and day_pct > 0:
             return "Wzrostowy (wszystkie TF)"
 
-        if month_pct < 0 and week_pct < 0 and day_pct < 0:
+        if long_pct < 0 and week_pct < 0 and day_pct < 0:
             return "Spadkowy (wszystkie TF)"
 
-        if month_pct > 0 and week_pct > 0 and day_pct < 0:
+        if long_pct > 0 and week_pct > 0 and day_pct < 0:
             return "Wzrostowy (korekta D1)"
 
-        if month_pct < 0 and week_pct < 0 and day_pct > 0:
+        if long_pct < 0 and week_pct < 0 and day_pct > 0:
             return "Spadkowy (odbicie D1)"
 
-        if month_pct > 0 and week_pct < 0 and day_pct > 0:
-            return "Wzrostowy M, korekta W, powrót D"
+        if long_pct > 0 and week_pct < 0 and day_pct > 0:
+            return "Wzrostowy 6M, korekta W, powrót D"
 
-        if month_pct < 0 and week_pct > 0 and day_pct < 0:
-            return "Spadkowy M, odbicie W, korekta D"
+        if long_pct < 0 and week_pct > 0 and day_pct < 0:
+            return "Spadkowy 6M, odbicie W, korekta D"
 
         return "Mieszany"
 
@@ -750,7 +1068,7 @@ class MainWindow(QMainWindow):
 
     def _tf(self, label_name: str) -> dict:
         return {
-            "month": self._get_summary(label_name, "miesiac"),
+            "long": self._get_summary(label_name, "szesc_miesiecy"),
             "week": self._get_summary(label_name, "tydzien"),
             "day": self._get_summary(label_name, "dzien"),
         }
@@ -773,43 +1091,65 @@ class MainWindow(QMainWindow):
 
     def _trend_score(self, tf: dict) -> float:
         score = 0.0
-        weights = {"month": 1.0, "week": 2.0, "day": 3.0}
+
+        weights = {
+            "long": 1.0,
+            "week": 2.0,
+            "day": 3.0,
+        }
+
+        thresholds = {
+            "long": 0.5,
+            "week": 0.2,
+            "day": 0.1,
+        }
 
         for key, weight in weights.items():
             pct = self._pct(tf.get(key, {}))
+
             if pct is None:
                 continue
 
-            if pct > 0.05:
+            threshold = thresholds.get(key, 0.1)
+
+            if pct > threshold:
                 score += weight
-            elif pct < -0.05:
+            elif pct < -threshold:
                 score -= weight
 
         return score
 
     def _avg_trend_score(self, labels: list):
         scores = []
+
         for label in labels:
             tf = self._tf(label)
-            if any(self._is_ok(tf[key]) for key in ("month", "week", "day")):
+
+            if any(self._is_ok(tf[key]) for key in ("long", "week", "day")):
                 scores.append(self._trend_score(tf))
 
         return sum(scores) / len(scores) if scores else None
 
     def _range_pct(self, label_name: str, suffix: str):
         summary = self._get_summary(label_name, suffix)
+
         if self._is_ok(summary):
             return summary.get("range_pct")
+
         return None
 
     def _compute_group_image(self) -> dict:
         intervals = [
-            ("miesiac", "Miesiąc (1d)"),
-            ("tydzien", "Tydzień (1h)"),
-            ("dzien", "Dzień (5m)"),
+            ("szesc_miesiecy", "6 Miesięcy (1D)"),
+            ("tydzien", "Tydzień (1H)"),
+            ("dzien", "Dzień (5M)"),
         ]
 
-        weights = {"miesiac": 1.0, "tydzien": 2.0, "dzien": 3.0}
+        weights = {
+            "szesc_miesiecy": 1.0,
+            "tydzien": 2.0,
+            "dzien": 3.0,
+        }
 
         result = {
             "name": "Grupa referencyjna SOL",
@@ -821,6 +1161,7 @@ class MainWindow(QMainWindow):
 
         group_weighted = 0.0
         group_weight_sum = 0.0
+
         sol_weighted = 0.0
         sol_weight_sum = 0.0
 
@@ -849,6 +1190,7 @@ class MainWindow(QMainWindow):
             group_class = classify_change(avg_pct, suffix)
 
             relation = "brak"
+
             if avg_pct is not None and sol_pct is not None:
                 threshold = CHANGE_THRESHOLDS.get(suffix, 1.0)
                 diff = sol_pct - avg_pct
@@ -888,11 +1230,13 @@ class MainWindow(QMainWindow):
                 overall_signal = "Otoczenie grupy wspiera SOL, ale SOL pozostaje względnie słabszy"
             else:
                 overall_signal = "Otoczenie grupy wspiera SOL"
+
         elif group_score < -0.25:
             if sol_score > 0.25:
                 overall_signal = "Otoczenie grupy jest spadkowe, ale SOL wykazuje względną siłę"
             else:
                 overall_signal = "Otoczenie grupy ciąży SOL"
+
         else:
             overall_signal = "Otoczenie grupy jest mieszane / neutralne dla SOL"
 
@@ -905,6 +1249,7 @@ class MainWindow(QMainWindow):
         )
 
         result["lines"] = self._format_group_lines(result)
+
         return result
 
     def _format_group_lines(self, group: dict) -> list:
@@ -917,11 +1262,12 @@ class MainWindow(QMainWindow):
         ]
 
         for suffix, interval_label in [
-            ("miesiac", "Miesiąc (1d)"),
-            ("tydzien", "Tydzień (1h)"),
-            ("dzien", "Dzień (5m)"),
+            ("szesc_miesiecy", "6 Miesięcy (1D)"),
+            ("tydzien", "Tydzień (1H)"),
+            ("dzien", "Dzień (5M)"),
         ]:
             data = group.get("intervals", {}).get(suffix, {})
+
             avg_pct = data.get("avg_pct")
             sol_pct = data.get("sol_pct")
             signal = data.get("signal", "brak")
@@ -949,6 +1295,7 @@ class MainWindow(QMainWindow):
 
         try:
             os.makedirs(TARGET_DIRECTORY, exist_ok=True)
+
             group_path = os.path.join(TARGET_DIRECTORY, "obraz_grupy_sol.md")
 
             with open(group_path, "w", encoding="utf-8") as f:
@@ -971,6 +1318,7 @@ class MainWindow(QMainWindow):
             return
 
         group_image = None
+
         if self.chk_group.isChecked():
             try:
                 group_image = self._compute_group_image()
@@ -978,6 +1326,7 @@ class MainWindow(QMainWindow):
                 group_image = {"error": str(e)}
 
         profile_suggestion = None
+
         if self.chk_profile.isChecked():
             try:
                 profile_suggestion = self._compute_profile_suggestion()
@@ -1013,19 +1362,21 @@ class MainWindow(QMainWindow):
         }
 
         for label_name in selected_labels:
-            month_summary = self._get_summary(label_name, "miesiac")
+            long_summary = self._get_summary(label_name, "szesc_miesiecy")
             week_summary = self._get_summary(label_name, "tydzien")
             day_summary = self._get_summary(label_name, "dzien")
 
             payload["tickers"][label_name] = {
-                "miesiac": month_summary,
+                "market_en": self.market_names_en.get(label_name, "Other"),
+                "market_pl": self.market_names_pl.get(label_name, "Inne"),
+                "szesc_miesiecy": long_summary,
                 "tydzien": week_summary,
                 "dzien": day_summary,
             }
 
             if self.chk_trend.isChecked():
                 payload["trend_comments"][label_name] = self._trend_comment(
-                    month_summary.get("pct"),
+                    long_summary.get("pct"),
                     week_summary.get("pct"),
                     day_summary.get("pct"),
                 )
@@ -1058,74 +1409,81 @@ class MainWindow(QMainWindow):
         trend_lines = []
 
         for label_name in selected_labels:
-            month_summary = self._get_summary(label_name, "miesiac")
+            long_summary = self._get_summary(label_name, "szesc_miesiecy")
             week_summary = self._get_summary(label_name, "tydzien")
             day_summary = self._get_summary(label_name, "dzien")
 
-            month_text = self._format_summary(month_summary)
+            long_text = self._format_summary(long_summary)
             week_text = self._format_summary(week_summary)
             day_text = self._format_summary(day_summary)
 
+            market_en = self.market_names_en.get(label_name, "Other")
+
             market_lines.append(
-                f"- **{label_name}** | "
-                f"🟢 Miesiąc (1d): {month_text} | "
-                f"🟡 Tydzień (1h): {week_text} | "
-                f"🔴 Dzień (5m): {day_text}"
+                f"- **{label_name}** [{market_en}] | "
+                f"🟢 6 Months (1D): {long_text} | "
+                f"🟡 Week (1H): {week_text} | "
+                f"🔴 Day (5M): {day_text}"
             )
 
             if self.chk_trend.isChecked():
                 trend = self._trend_comment(
-                    month_summary.get("pct"),
+                    long_summary.get("pct"),
                     week_summary.get("pct"),
                     day_summary.get("pct"),
                 )
-                trend_lines.append(f"- **{label_name}**: {trend}")
+
+                trend_lines.append(f"- **{label_name}** [{market_en}]: {trend}")
 
         generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         report_lines = [
-            "# RAPORT RYNKOWY DLA AI (Aktualny stan wszystkich instrumentów — Makro i Krypto)",
+            "# MARKET REPORT FOR AI (Multi-timeframe state — Macro & Crypto)",
             "",
-            f"Wygenerowano: {generated_at}",
-            f"Zakres raportu: {selection_info}",
+            f"Generated at: {generated_at}",
+            f"Scope: {selection_info}",
             "",
-            "## Zestawienie wielookresowe (Miesiąc / Tydzień / Dzień)",
+            "## Multi-timeframe Breakdown (6 Months / Week / Day)",
             "",
         ]
 
         report_lines.extend(market_lines)
 
         if self.chk_trend.isChecked() and trend_lines:
-            report_lines.extend(["", "## Prosta ocena trendu", ""])
+            report_lines.extend(["", "## Simple Trend Evaluation", ""])
             report_lines.extend(trend_lines)
 
         if self.chk_group.isChecked():
             try:
                 group_image = self._compute_group_image()
-                report_lines.extend(["", "## Grupa referencyjna SOL (NQ1! / NVDA / ETH / BTC)", ""])
+
+                report_lines.extend(["", "## SOL Reference Group (NQ1! / NVDA / ETH / BTC)", ""])
                 report_lines.extend(group_image["lines"])
+
             except Exception as e:
                 report_lines.extend(
                     [
                         "",
-                        "## Grupa referencyjna SOL (NQ1! / NVDA / ETH / BTC)",
+                        "## SOL Reference Group (NQ1! / NVDA / ETH / BTC)",
                         "",
-                        f"Błąd obliczenia grupy: {str(e)}",
+                        f"Group calculation error: {str(e)}",
                     ]
                 )
 
         if self.chk_profile.isChecked():
             try:
                 profile_result = self._compute_profile_suggestion()
-                report_lines.extend(["", "## Sugestia profilu SOL/BTC", ""])
+
+                report_lines.extend(["", "## SOL/BTC Profile Suggestion", ""])
                 report_lines.extend(profile_result["lines"])
+
             except Exception as e:
                 report_lines.extend(
                     [
                         "",
-                        "## Sugestia profilu SOL/BTC",
+                        "## SOL/BTC Profile Suggestion",
                         "",
-                        f"Błąd obliczenia profilu: {str(e)}",
+                        f"Profile calculation error: {str(e)}",
                     ]
                 )
 
@@ -1133,19 +1491,15 @@ class MainWindow(QMainWindow):
             report_lines.extend(
                 [
                     "",
-                    "## Instrukcja dla modelu AI",
+                    "## Instructions for AI Model",
                     "",
-                    "Przeanalizuj powyższe dane wielookresowe dla wszystkich instrumentów "
-                    "(w tym ekosystemu Solany i Bitcoina) jako jedną spójną całość:",
-                    "1. Oceń ogólny stan i nastroje na globalnym rynku oraz rynku kryptowalut.",
-                    "2. Sprawdź spójność trendów między poszczególnymi interwałami czasowymi "
-                    "(miesiąc, tydzień, dzień).",
-                    "3. Wskaż najważniejsze korelacje i anomalie pomiędzy tradycyjnymi indeksami, "
-                    "surowcami, walutami a aktywami cyfrowymi (Solana, BTC, ETH, MSTR, COIN).",
-                    "4. Uwzględnij grupę referencyjną NQ1! / NVDA / ETH / BTC jako orientacyjne "
-                    "otoczenie wpływające na SOL.",
-                    "5. Jeśli część danych ma status 'Brak pliku', 'Brak danych' lub 'Błąd odczytu', "
-                    "traktuj to jako brak potwierdzenia danych, a nie jako sygnał rynkowy.",
+                    "Analyze the multi-timeframe data above (including RSI, EMA20, SMA50, MACD indicators) "
+                    "for all instruments as a single integrated context:",
+                    "1. Evaluate market sentiment across global macro and crypto markets.",
+                    "2. Check trend consistency across 6M, 1W, and 1D timeframes.",
+                    "3. Highlight key correlations, technical indicator momentum (RSI/MACD), and anomalies.",
+                    "4. Factor in the NQ1! / NVDA / ETH / BTC reference environment for Solana.",
+                    "5. Missing files/data indicate lack of data confirmation, not a direct trading signal.",
                 ]
             )
 
@@ -1154,6 +1508,7 @@ class MainWindow(QMainWindow):
 
         try:
             os.makedirs(TARGET_DIRECTORY, exist_ok=True)
+
             with open(report_path, "w", encoding="utf-8") as f:
                 f.write(report_content)
 
@@ -1164,8 +1519,7 @@ class MainWindow(QMainWindow):
 
     def generate_human_report_file(self):
         """
-        Zaktualizowana wersja generatora raportu dla człowieka ze spójną,
-        czytelną strukturą tabelaryczną Markdown.
+        Generator raportu dla człowieka z idealnie wyrównanymi kolumnami tabel Markdown.
         """
         if not os.path.exists(TARGET_DIRECTORY):
             self.status_label.setText("Brak folderu z danymi! Najpierw pobierz dane.")
@@ -1185,7 +1539,7 @@ class MainWindow(QMainWindow):
             f"Wygenerowano: `{generated_at}` | Zakres: `{selection_info}`",
             "",
             "**Legenda:** 🟢 wzrost | 🔵 konsolidacja / brak ruchu | 🔴 spadek | ⚪ brak danych",
-            f"*Progi konsolidacji:* Miesiąc ±{CHANGE_THRESHOLDS['miesiac']:.2f}% | "
+            f"*Progi konsolidacji:* 6 Miesięcy ±{CHANGE_THRESHOLDS['szesc_miesiecy']:.2f}% | "
             f"Tydzień ±{CHANGE_THRESHOLDS['tydzien']:.2f}% | "
             f"Dzień ±{CHANGE_THRESHOLDS['dzien']:.2f}%",
             "",
@@ -1198,23 +1552,25 @@ class MainWindow(QMainWindow):
             [
                 "## 1. Dynamiczne zmiany procentowe i Trend",
                 "",
-                "| Instrument | Miesiąc (1D) | Tydzień (1H) | Dzień (5M) | Ocena Trendu |",
-                "| :--- | :---: | :---: | :---: | :--- |",
+                "| Instrument | Rynek / Sektor | 6 Miesięcy (1D) | Tydzień (1H) | Dzień (5M) | Ocena Trendu |",
+                "| :--- | :--- | :---: | :---: | :---: | :--- |",
             ]
         )
 
         for label_name in selected_labels:
-            month_summary = self._get_summary(label_name, "miesiac")
+            long_summary = self._get_summary(label_name, "szesc_miesiecy")
             week_summary = self._get_summary(label_name, "tydzien")
             day_summary = self._get_summary(label_name, "dzien")
 
-            month_cell = self._human_cell(month_summary, "miesiac")
+            long_cell = self._human_cell(long_summary, "szesc_miesiecy")
             week_cell = self._human_cell(week_summary, "tydzien")
             day_cell = self._human_cell(day_summary, "dzien")
 
+            market_pl = self.market_names_pl.get(label_name, "Inne")
+
             trend = (
                 self._trend_comment(
-                    month_summary.get("pct"),
+                    long_summary.get("pct"),
                     week_summary.get("pct"),
                     day_summary.get("pct"),
                 )
@@ -1223,29 +1579,44 @@ class MainWindow(QMainWindow):
             )
 
             lines.append(
-                f"| **{label_name}** | {month_cell} | {week_cell} | {day_cell} | {trend} |"
+                f"| **{label_name}** | {market_pl} | {long_cell} | {week_cell} | {day_cell} | {trend} |"
             )
 
         # --------------------------------------------------
-        # 2. Tabela szczegółowa: Poziomy cenowe i dane rynkowe
+        # 2. Tabela szczegółowa: Poziomy cenowe, wskaźniki i metryki
         # --------------------------------------------------
         lines.extend(
             [
                 "",
-                "## 2. Szczegółowe metryki rynkowe",
+                "## 2. Szczegółowe metryki rynkowe i Wskaźniki",
                 "",
             ]
         )
 
-        headers = ["Instrument", "Ostatnia Cena"]
-        alignments = [":---", "---:"]
+        headers = [
+            "Instrument",
+            "Rynek",
+            "Ostatnia Cena",
+            "RSI (14)",
+            "EMA20 / SMA50",
+            "MACD / Signal",
+        ]
+
+        alignments = [
+            ":---",
+            ":---",
+            "---:",
+            ":---:",
+            ":---:",
+            ":---:",
+        ]
 
         if self.chk_minmax.isChecked():
             headers.append("Zakres Min / Max")
             alignments.append(":---:")
 
         if self.chk_bars.isChecked():
-            headers.append("Liczba Świec (M/T/D)")
+            headers.append("Liczba Świec (6M/1W/1D)")
             alignments.append(":---:")
 
         if self.chk_timestamp.isChecked():
@@ -1256,20 +1627,21 @@ class MainWindow(QMainWindow):
         lines.append("| " + " | ".join(alignments) + " |")
 
         for label_name in selected_labels:
-            month_summary = self._get_summary(label_name, "miesiac")
+            long_summary = self._get_summary(label_name, "szesc_miesiecy")
             week_summary = self._get_summary(label_name, "tydzien")
             day_summary = self._get_summary(label_name, "dzien")
 
-            summaries = [day_summary, week_summary, month_summary]
+            summaries = [day_summary, week_summary, long_summary]
 
             price = None
+
             for summary in summaries:
                 if self._is_ok(summary) and summary.get("price") is not None:
                     price = summary.get("price")
                     break
 
             source_summary = next(
-                (s for s in (month_summary, week_summary, day_summary) if self._is_ok(s)),
+                (s for s in (long_summary, week_summary, day_summary) if self._is_ok(s)),
                 {},
             )
 
@@ -1277,14 +1649,36 @@ class MainWindow(QMainWindow):
             max_price = source_summary.get("max")
 
             last_ts = ""
+
             for summary in summaries:
                 if self._is_ok(summary) and summary.get("last_ts"):
                     last_ts = summary.get("last_ts")
                     break
 
+            market_pl = self.market_names_pl.get(label_name, "Inne")
+
+            # Formatowanie wskaźników technicznych z głównego dostępnego zakresu.
+            inds = source_summary.get("indicators", {})
+
+            rsi_str = f"{inds['rsi_14']:.1f}" if inds.get("rsi_14") is not None else "-"
+
+            ema_str = self.format_price(inds["ema_20"]) if inds.get("ema_20") is not None else "-"
+            sma_str = self.format_price(inds["sma_50"]) if inds.get("sma_50") is not None else "-"
+
+            ma_combined = f"{ema_str} / {sma_str}"
+
+            macd_val = f"{inds['macd']:.2f}" if inds.get("macd") is not None else "-"
+            macd_sig = f"{inds['macd_signal']:.2f}" if inds.get("macd_signal") is not None else "-"
+
+            macd_combined = f"{macd_val} / {macd_sig}"
+
             row = [
                 f"**{label_name}**",
+                market_pl,
                 self.format_price(price) if price is not None else "brak",
+                rsi_str,
+                ma_combined,
+                macd_combined,
             ]
 
             if self.chk_minmax.isChecked():
@@ -1297,7 +1691,7 @@ class MainWindow(QMainWindow):
 
             if self.chk_bars.isChecked():
                 row.append(
-                    f"{month_summary.get('bars', 0)} / "
+                    f"{long_summary.get('bars', 0)} / "
                     f"{week_summary.get('bars', 0)} / "
                     f"{day_summary.get('bars', 0)}"
                 )
@@ -1327,11 +1721,12 @@ class MainWindow(QMainWindow):
                 )
 
                 for suffix, interval_label in [
-                    ("miesiac", "Miesiąc (1D)"),
+                    ("szesc_miesiecy", "6 Miesięcy (1D)"),
                     ("tydzien", "Tydzień (1H)"),
                     ("dzien", "Dzień (5M)"),
                 ]:
                     data = group.get("intervals", {}).get(suffix, {})
+
                     avg_pct = data.get("avg_pct")
                     sol_pct = data.get("sol_pct")
                     signal = data.get("signal", "brak")
@@ -1347,16 +1742,18 @@ class MainWindow(QMainWindow):
                         "",
                         "### Komponenty Grupy SOL",
                         "",
-                        "| Komponent | Miesiąc (1D) | Tydzień (1H) | Dzień (5M) |",
+                        "| Komponent | 6 Miesięcy (1D) | Tydzień (1H) | Dzień (5M) |",
                         "| :--- | :---: | :---: | :---: |",
                     ]
                 )
 
                 for comp in GROUP_COMPONENTS:
                     cells = []
-                    for suffix in ["miesiac", "tydzien", "dzien"]:
+
+                    for suffix in ["szesc_miesiecy", "tydzien", "dzien"]:
                         comp_data = group.get("intervals", {}).get(suffix, {})
                         pct = comp_data.get("component_pcts", {}).get(comp, {}).get("pct")
+
                         cells.append(self._dot_text(pct, suffix))
 
                     lines.append(f"| **{comp}** | " + " | ".join(cells) + " |")
@@ -1386,6 +1783,7 @@ class MainWindow(QMainWindow):
                         "```text",
                     ]
                 )
+
                 lines.extend(profile["lines"])
                 lines.append("```")
 
@@ -1403,16 +1801,20 @@ class MainWindow(QMainWindow):
             [
                 "",
                 "---",
-                "*Raport ma charakter poglądowy. Oznaczenia kolorami są oparte o twarde progi procentowe.*",
+                "*Raport ma charakter poglądowy. Wskaźniki i poziomy są wyliczane automatycznie.*",
                 "",
             ]
         )
+
+        # Wyrównanie kolumn w tabeli dla idealnego wyglądu w pliku markdown.
+        lines = align_markdown_table(lines)
 
         report_content = "\n".join(lines) + "\n"
         report_path = os.path.join(TARGET_DIRECTORY, "raport_dla_czlowieka.md")
 
         try:
             os.makedirs(TARGET_DIRECTORY, exist_ok=True)
+
             with open(report_path, "w", encoding="utf-8") as f:
                 f.write(report_content)
 
@@ -1427,7 +1829,8 @@ class MainWindow(QMainWindow):
 
         for label in core_labels:
             tf = self._tf(label)
-            if not any(self._is_ok(tf[key]) for key in ("month", "week", "day")):
+
+            if not any(self._is_ok(tf[key]) for key in ("long", "week", "day")):
                 missing.append(label)
 
         if missing:
@@ -1448,8 +1851,10 @@ class MainWindow(QMainWindow):
         btc = self._tf("BTC-USD")
         sol = self._tf("SOL-USD")
         solbtc = self._tf("SOL-BTC")
+
         eth = self._tf("ETH-USD")
         ethbtc = self._tf("ETH-BTC")
+
         dxy = self._tf("DXY")
         vix = self._tf("VIX")
         us10y = self._tf("US10Y")
@@ -1457,21 +1862,26 @@ class MainWindow(QMainWindow):
         btc_score = self._trend_score(btc)
         sol_score = self._trend_score(sol)
         solbtc_score = self._trend_score(solbtc)
+
         eq_score = self._avg_trend_score(["NQ1!", "ES1!", "DJI"])
 
-        btc_m = self._pct(btc.get("month", {}))
+        btc_6m = self._pct(btc.get("long", {}))
         btc_w = self._pct(btc.get("week", {}))
         btc_d = self._pct(btc.get("day", {}))
 
-        sol_m = self._pct(sol.get("month", {}))
+        sol_6m = self._pct(sol.get("long", {}))
         sol_w = self._pct(sol.get("week", {}))
         sol_d = self._pct(sol.get("day", {}))
 
-        solbtc_m = self._pct(solbtc.get("month", {}))
+        solbtc_6m = self._pct(solbtc.get("long", {}))
         solbtc_w = self._pct(solbtc.get("week", {}))
         solbtc_d = self._pct(solbtc.get("day", {}))
 
         vix_price = self._price(vix.get("day", {}))
+
+        if vix_price is None:
+            vix_price = self._price(vix.get("long", {}))
+
         vix_week = self._pct(vix.get("week", {}))
         us10y_week = self._pct(us10y.get("week", {}))
 
@@ -1495,6 +1905,7 @@ class MainWindow(QMainWindow):
 
         def add(profile: str, points: float, reason: str = ""):
             scores[profile] += points
+
             if reason:
                 reasons[profile].append(reason)
 
@@ -1532,6 +1943,7 @@ class MainWindow(QMainWindow):
                 7.0,
                 "Equities są słabe, a DXY/VIX sugerują defensywne otoczenie makro.",
             )
+
         elif eq_score is not None and eq_score <= -1.0 and dxy_week > 0 and (vix_price or 0.0) >= 18.0:
             add(
                 "MACRO_RISK_OFF_DEFENSIVE",
@@ -1548,8 +1960,9 @@ class MainWindow(QMainWindow):
 
         # BEAR_TREND_DEFENSIVE
         avg_btc_pct = None
-        if all(isinstance(x, (int, float)) for x in (btc_m, btc_w, btc_d)):
-            avg_btc_pct = (btc_m + btc_w + btc_d) / 3.0
+
+        if all(isinstance(x, (int, float)) for x in (btc_6m, btc_w, btc_d)):
+            avg_btc_pct = (btc_6m + btc_w + btc_d) / 3.0
 
         if btc_score <= -4.0 and sol_score <= -3.0:
             add(
@@ -1557,21 +1970,22 @@ class MainWindow(QMainWindow):
                 7.0,
                 "BTC i SOL są w wyraźnie spadkowym układzie wielookresowym.",
             )
+
         elif (
-            btc_m is not None
+            btc_6m is not None
             and btc_w is not None
             and btc_d is not None
-            and btc_m < 0
+            and btc_6m < 0
             and btc_w < 0
             and btc_d < 0
         ):
-            if avg_btc_pct is not None and avg_btc_pct <= -3.0:
+            if avg_btc_pct is not None and avg_btc_pct <= -8.0:
                 add(
                     "BEAR_TREND_DEFENSIVE",
                     6.0,
                     "BTC spadkowy na wszystkich interwałach, a ruch jest znaczący.",
                 )
-            elif avg_btc_pct is not None and avg_btc_pct <= -1.0:
+            elif avg_btc_pct is not None and avg_btc_pct <= -3.0:
                 add(
                     "BEAR_TREND_DEFENSIVE",
                     4.0,
@@ -1593,18 +2007,19 @@ class MainWindow(QMainWindow):
 
         # BEAR_BOUNCE_CAUTIOUS
         if (
-            btc_m is not None
+            btc_6m is not None
             and btc_w is not None
             and btc_d is not None
-            and btc_m < -1.0
+            and btc_6m < -3.0
             and btc_w > 0.5
             and btc_d < 0.0
         ):
             add(
                 "BEAR_BOUNCE_CAUTIOUS",
                 6.0,
-                "Miesięczny trend spadkowy BTC, tygodniowe odbicie, ale dzienna słabość.",
+                "6-miesięczny trend spadkowy BTC, tygodniowe odbicie, ale dzienna słabość.",
             )
+
         elif btc_score < 0.0 and sol_score > btc_score and (solbtc_w or 0.0) > 0.0:
             add(
                 "BEAR_BOUNCE_CAUTIOUS",
@@ -1626,6 +2041,7 @@ class MainWindow(QMainWindow):
                     2.0,
                     "Equities potwierdzają risk-on.",
                 )
+
         elif btc_score >= 2.0 and sol_score >= 2.0 and solbtc_score >= -1.0:
             add(
                 "BULL_TREND_MOMENTUM",
@@ -1635,10 +2051,10 @@ class MainWindow(QMainWindow):
 
         # BULL_PULLBACK_CONSTRUCTIVE
         if (
-            btc_m is not None
+            btc_6m is not None
             and btc_w is not None
             and btc_d is not None
-            and btc_m > 0.0
+            and btc_6m > 3.0
             and btc_w > 0.0
             and btc_d < 0.0
             and abs_val(btc_d) < 2.0
@@ -1650,10 +2066,10 @@ class MainWindow(QMainWindow):
             )
 
         if (
-            sol_m is not None
+            sol_6m is not None
             and sol_w is not None
             and sol_d is not None
-            and sol_m > 0.0
+            and sol_6m > 3.0
             and sol_w > 0.0
             and sol_d < 0.0
             and abs_val(sol_d) < 3.0
@@ -1671,6 +2087,7 @@ class MainWindow(QMainWindow):
                 7.0,
                 "BTC mocniejszy niż SOL/BTC — alty są słabe względem BTC.",
             )
+
         elif btc_score >= 0.0 and solbtc_w is not None and solbtc_w < -1.0:
             add(
                 "BTC_LEADERSHIP_ALTS_WEAK",
@@ -1683,6 +2100,7 @@ class MainWindow(QMainWindow):
 
         if ethbtc_week is None:
             eth_w = self._pct(eth.get("week", {}))
+
             if eth_w is not None and btc_w is not None:
                 ethbtc_week = eth_w - btc_w
 
@@ -1706,7 +2124,7 @@ class MainWindow(QMainWindow):
             and sol_w is not None
             and btc_w is not None
             and sol_w > btc_w
-            and (btc_score <= 0.0 or (solbtc_m or 0.0) <= 0.0)
+            and (btc_score <= 0.0 or (solbtc_6m or 0.0) <= 0.0)
         ):
             add(
                 "SOL_RECOVERY_SELECTIVE",
@@ -1824,9 +2242,9 @@ class MainWindow(QMainWindow):
             [
                 "",
                 "Kluczowe metryki:",
-                f"BTC Mies./Tyg./Dzień: {fmt_pct(btc_m)} / {fmt_pct(btc_w)} / {fmt_pct(btc_d)}",
-                f"SOL Mies./Tyg./Dzień: {fmt_pct(sol_m)} / {fmt_pct(sol_w)} / {fmt_pct(sol_d)}",
-                f"SOL/BTC Mies./Tyg./Dzień: {fmt_pct(solbtc_m)} / {fmt_pct(solbtc_w)} / {fmt_pct(solbtc_d)}",
+                f"BTC 6M/Tyg./Dzień: {fmt_pct(btc_6m)} / {fmt_pct(btc_w)} / {fmt_pct(btc_d)}",
+                f"SOL 6M/Tyg./Dzień: {fmt_pct(sol_6m)} / {fmt_pct(sol_w)} / {fmt_pct(sol_d)}",
+                f"SOL/BTC 6M/Tyg./Dzień: {fmt_pct(solbtc_6m)} / {fmt_pct(solbtc_w)} / {fmt_pct(solbtc_d)}",
                 f"Trend score BTC/SOL/SOL-BTC: {btc_score:+.1f} / {sol_score:+.1f} / {solbtc_score:+.1f}",
                 f"Equities score: {eq_text}",
                 f"VIX cena: {fmt_num(vix_price)}",
@@ -1864,6 +2282,7 @@ class MainWindow(QMainWindow):
 
         try:
             os.makedirs(TARGET_DIRECTORY, exist_ok=True)
+
             profile_path = os.path.join(TARGET_DIRECTORY, "profil_dla_ai.md")
 
             with open(profile_path, "w", encoding="utf-8") as f:
@@ -1888,9 +2307,11 @@ if __name__ == "__main__":
             font-size: 15px;
             color: #c9d1d9;
         }
+
         QMainWindow {
             background: #121212;
         }
+
         QGroupBox {
             font-weight: bold;
             border: 1px solid #2d3139;
@@ -1899,12 +2320,14 @@ if __name__ == "__main__":
             padding: 10px 8px 8px 8px;
             color: #e6edf3;
         }
+
         QGroupBox::title {
             subcontrol-origin: margin;
             left: 10px;
             padding: 0px 5px;
             color: #58a6ff;
         }
+
         QPushButton {
             padding: 8px 12px;
             border-radius: 6px;
@@ -1912,21 +2335,26 @@ if __name__ == "__main__":
             background: #21262d;
             color: #c9d1d9;
         }
+
         QPushButton:hover {
             background: #30363d;
             border-color: #8b949e;
         }
+
         QPushButton:pressed {
             background: #161b22;
         }
+
         QScrollArea {
             border: 1px solid #2d3139;
             border-radius: 6px;
             background: #121212;
         }
+
         QLabel {
             font-size: 14px;
         }
+
         QCheckBox {
             spacing: 6px;
         }
